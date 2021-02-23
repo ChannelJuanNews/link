@@ -1,0 +1,50 @@
+Arguments: 
+  /Users/erdesign7/emsdk/node/12.18.1_64bit/bin/node /usr/local/Cellar/yarn/1.22.10/libexec/bin/yarn.js add @mikro-orm/cli @micro-orm/core @mikro-orm/migrations @mikro-orm/postgresql pg
+
+PATH: 
+  /usr/local/opt/openssl@1.1/bin:/Users/erdesign7/emsdk:/Users/erdesign7/emsdk/upstream/emscripten:/Users/erdesign7/emsdk/node/12.18.1_64bit/bin:/Users/erdesign7/emsdk/python/3.7.4-2_64bit/bin:/usr/local/lib/node_modules/node/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/Applications/GIMP-2.10.app/Contents/MacOS:/usr/local/lib/node_modules/node/bin:/usr/local/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/Library/Apple/usr/bin:/usr/local/opt/openssl@1.1/bin:/Users/erdesign7/emsdk:/Users/erdesign7/emsdk/upstream/emscripten:/Users/erdesign7/emsdk/node/12.18.1_64bit/bin:/Users/erdesign7/emsdk/python/3.7.4-2_64bit/bin:/usr/local/lib/node_modules/node/bin:/Applications/GIMP-2.10.app/Contents/MacOS:/Users/gerardo/Library/Android/sdk/emulator:/Users/gerardo/Library/Android/sdk/tools:/Users/gerardo/Library/Android/sdk/tools/bin:/Users/gerardo/Library/Android/sdk/platform-tools:/Users/gerardo/Library/Android/sdk/emulator:/Users/gerardo/Library/Android/sdk/tools:/Users/gerardo/Library/Android/sdk/tools/bin:/Users/gerardo/Library/Android/sdk/platform-tools
+
+Yarn version: 
+  1.22.10
+
+Node version: 
+  12.18.1
+
+Platform: 
+  darwin x64
+
+Trace: 
+  Error: https://registry.yarnpkg.com/@micro-orm%2fcore: Not found
+      at Request.params.callback [as _callback] (/usr/local/Cellar/yarn/1.22.10/libexec/lib/cli.js:66988:18)
+      at Request.self.callback (/usr/local/Cellar/yarn/1.22.10/libexec/lib/cli.js:140749:22)
+      at Request.emit (events.js:315:20)
+      at Request.<anonymous> (/usr/local/Cellar/yarn/1.22.10/libexec/lib/cli.js:141721:10)
+      at Request.emit (events.js:315:20)
+      at IncomingMessage.<anonymous> (/usr/local/Cellar/yarn/1.22.10/libexec/lib/cli.js:141643:12)
+      at Object.onceWrapper (events.js:421:28)
+      at IncomingMessage.emit (events.js:327:22)
+      at endReadableNT (_stream_readable.js:1221:12)
+      at processTicksAndRejections (internal/process/task_queues.js:84:21)
+
+npm manifest: 
+  {
+    "name": "listalink",
+    "version": "1.0.0",
+    "description": "",
+    "main": "index.js",
+    "scripts": {
+      "watch": "tsc -w",
+      "dev": "nodemon dist/index.js",
+      "start": "node dist/index.js",
+      "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC"
+  }
+
+yarn manifest: 
+  No manifest
+
+Lockfile: 
+  No lockfile
