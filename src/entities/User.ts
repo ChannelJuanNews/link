@@ -9,10 +9,10 @@ export class User {
   @PrimaryKey()
   id!: number;
 
-  // name
+  // email
   @Field(() => String)
   @Property()
-  name!: string;
+  email!: string;
 
   @Field()
   @Property({ type: "text", unique: true })

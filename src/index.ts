@@ -13,13 +13,11 @@ import express from "express";
 import { ApolloServer } from "apollo-server-express";
 import { buildSchema } from "type-graphql";
 
-import debug from "debug";
 import { HelloResolver } from "./resolvers/hello";
 import { UserResolver } from "./resolvers/user";
 
-// create logger for main function
-const LOGGER = debug("main");
-const ERROR = LOGGER.extend("ERROR");
+import { LOGGER, ERROR } from "./util/logger";
+
 //const WARN = LOGGER.extend("WARN");
 const PORT = process.env.PORT! || 3000;
 
