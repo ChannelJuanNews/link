@@ -36,6 +36,35 @@ class UserResponse {
 
 @Resolver()
 export class UserResolver {
+  @Query(() => UserResponse)
+  async me(@Ctx() { em, req }: MyContext): Promise<UserResponse> {
+    if (!req.session.userId) {
+      console.log("no user id exists");
+      // mixpanel insertions here
+      return {
+        error: {
+          message: "Unauthorized, failed to fetch user profile",
+          code: 40,
+        },
+      };
+    }
+
+    const user = await em.findOne(User, { id: req.session.userId });
+
+    if (user) {
+      return {
+        user: user,
+      };
+    } else {
+      return {
+        error: {
+          message: "Failed to get user profile",
+          code: 44, // error code to set that the user is authorized but failed to retrieve the user profile
+        },
+      };
+    }
+  }
+
   // get all users
   @Query(() => [User])
   users(@Ctx() { em }: MyContext): Promise<User[]> {
@@ -109,13 +138,14 @@ export class UserResolver {
     @Arg("email") email: string,
     @Arg("username") username: string,
     @Arg("password") password: string,
-    @Ctx() { em }: MyContext
+    @Ctx() { em, req }: MyContext
   ): Promise<UserResponse> {
     const user = await em.findOne(User, { $or: [{ email }, { username }] });
 
     if (user) {
       const verified = argon2.verify(user.password, password);
       if (verified) {
+        req.session!.userId = user.id;
         return {
           user: user,
         };

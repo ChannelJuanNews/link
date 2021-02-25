@@ -21,6 +21,7 @@ import { LOGGER, ERROR } from "./util/logger";
 import redis from "redis";
 import session from "express-session";
 import store from "connect-redis";
+import { MyContext } from "./types";
 
 //const WARN = LOGGER.extend("WARN");
 const PORT = process.env.PORT! || 3000;
@@ -44,10 +45,17 @@ const main = async () => {
   // session middleware that uses redis to store our server-side sessions
   app.use(
     session({
-      store: new RedisStore({ client: RedisClient }),
+      name: process.env.COOKIE_NAME || "link:id",
+      store: new RedisStore({ client: RedisClient, disableTouch: true }),
       secret: process.env.REDIS_SECRET || "randomsecretgoeshere",
-      saveUninitialized: true,
+      saveUninitialized: false,
       resave: false,
+      cookie: {
+        httpOnly: true,
+        maxAge: 1000 * 60 * 60 * 24 * 3, // 3 days
+        secure: process.env.PRODUCTION?.toLowerCase() === "true" || false, // cookie only works with https in production
+        sameSite: "lax",
+      },
     })
   );
 
@@ -57,7 +65,7 @@ const main = async () => {
       resolvers: [UserResolver, HelloResolver],
       validate: false,
     }),
-    context: () => ({ em: orm.em }),
+    context: ({ req, res }): MyContext => ({ em: orm.em, req, res }),
   });
 
   apollo.applyMiddleware({ app });
