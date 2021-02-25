@@ -1,5 +1,5 @@
 import { User } from "../entities/User";
-import { Arg, Ctx, Mutation, Query, Resolver } from "type-graphql";
+import { Arg, Ctx, Field, Mutation, ObjectType, Query, Resolver } from "type-graphql";
 import { MyContext } from "../types";
 
 import { LOGGER, ERROR } from "../util/logger";
@@ -7,6 +7,26 @@ import { LOGGER, ERROR } from "../util/logger";
 import argon2 from "argon2";
 
 import validateEmail from "../util/validateEmail";
+
+
+
+@ObjectType()
+class ErrorMessage {
+    @Field(() => String , { nullable : true })
+    message?:string 
+    @Field(() => Number, { nullable : true })
+    code?: number 
+}
+
+@ObjectType()
+class UserResponse {
+    @Field( () => ErrorMessage, { nullable : true })
+    error? : ErrorMessage
+    @Field(() => User, { nullable : true })
+    user?: User
+}
+
+
 
 @Resolver()
 export class UserResolver {
@@ -51,6 +71,48 @@ export class UserResolver {
       };
     }
   }
+
+  // login user 
+  @Mutation(() => UserResponse )
+  async login(
+    @Arg("email") email: string,
+    @Arg("username") username: string,
+    @Arg("password") password: string,
+    @Ctx() { em }: MyContext
+  ) : Promise<UserResponse> {
+    const  user = await em.findOne( User, { email : email, username : username  })
+
+    if(!user) {
+
+      
+        return {
+            error : {
+                code : 40, 
+                message: "Failed to find a user with the given username or email"
+            }
+        } 
+    }
+
+
+    const valid = argon2.verify( user.password, password)
+    if(!valid){
+              
+        return {
+            error : {
+                code : 40, 
+                message: "Incorrect password for given username or email"
+            }
+            
+        } 
+
+    } 
+
+    return { user }
+
+  }
+
+
+
 
   // update user by id
   @Mutation(() => User)
