@@ -12,11 +12,15 @@ import express from "express";
 // import our graphql endpoints
 import { ApolloServer } from "apollo-server-express";
 import { buildSchema } from "type-graphql";
-
+// resolvers for our our graphql queries
 import { HelloResolver } from "./resolvers/hello";
 import { UserResolver } from "./resolvers/user";
-
+// loggers for io
 import { LOGGER, ERROR } from "./util/logger";
+
+import redis from "redis";
+import session from "express-session";
+import store from "connect-redis";
 
 //const WARN = LOGGER.extend("WARN");
 const PORT = process.env.PORT! || 3000;
@@ -32,6 +36,20 @@ const main = async () => {
 
   // instantiate our express applicaiton
   const app = express();
+
+  // connect our sesssion middleware
+  const RedisStore = store(session);
+  const RedisClient = redis.createClient();
+
+  // session middleware that uses redis to store our server-side sessions
+  app.use(
+    session({
+      store: new RedisStore({ client: RedisClient }),
+      secret: process.env.REDIS_SECRET || "randomsecretgoeshere",
+      saveUninitialized: true,
+      resave: false,
+    })
+  );
 
   // instantiate our graphql library
   const apollo = new ApolloServer({
