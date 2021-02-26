@@ -12,11 +12,16 @@ import express from "express";
 // import our graphql endpoints
 import { ApolloServer } from "apollo-server-express";
 import { buildSchema } from "type-graphql";
-
+// resolvers for our our graphql queries
 import { HelloResolver } from "./resolvers/hello";
 import { UserResolver } from "./resolvers/user";
-
+// loggers for io
 import { LOGGER, ERROR } from "./util/logger";
+
+import redis from "redis";
+import session from "express-session";
+import store from "connect-redis";
+import { MyContext } from "./types";
 
 //const WARN = LOGGER.extend("WARN");
 const PORT = process.env.PORT! || 3000;
@@ -33,13 +38,34 @@ const main = async () => {
   // instantiate our express applicaiton
   const app = express();
 
+  // connect our sesssion middleware
+  const RedisStore = store(session);
+  const RedisClient = redis.createClient();
+
+  // session middleware that uses redis to store our server-side sessions
+  app.use(
+    session({
+      name: process.env.COOKIE_NAME || "link:id",
+      store: new RedisStore({ client: RedisClient, disableTouch: true }),
+      secret: process.env.REDIS_SECRET || "randomsecretgoeshere",
+      saveUninitialized: false,
+      resave: false,
+      cookie: {
+        httpOnly: true,
+        maxAge: 1000 * 60 * 60 * 24 * 3, // 3 days
+        secure: process.env.PRODUCTION?.toLowerCase() === "true" || false, // cookie only works with https in production
+        sameSite: "lax",
+      },
+    })
+  );
+
   // instantiate our graphql library
   const apollo = new ApolloServer({
     schema: await buildSchema({
       resolvers: [UserResolver, HelloResolver],
       validate: false,
     }),
-    context: () => ({ em: orm.em }),
+    context: ({ req, res }): MyContext => ({ em: orm.em, req, res }),
   });
 
   apollo.applyMiddleware({ app });

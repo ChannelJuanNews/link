@@ -3,6 +3,15 @@ import { ObjectType, Field, Int } from "type-graphql";
 
 @ObjectType()
 @Entity()
+/* 
+@Filter({
+  name: "containsEmail",
+  cond: (args) => ({ email: args.email }),
+})
+@Filter({
+  name: "containsUsername",
+  cond: (args) => ({ username: args.username }),
+})*/
 export class User {
   // id
   @Field(() => Int)
