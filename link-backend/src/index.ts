@@ -24,7 +24,7 @@ import store from "connect-redis";
 import { MyContext } from "./types";
 
 //const WARN = LOGGER.extend("WARN");
-const PORT = process.env.PORT! || 3000;
+const PORT = process.env.PORT! || 3001;
 
 // main function for running our backend
 const main = async () => {
@@ -65,7 +65,12 @@ const main = async () => {
       resolvers: [UserResolver, HelloResolver],
       validate: false,
     }),
-    context: ({ req, res }): MyContext => ({ em: orm.em, req, res }),
+
+    context: ({ req, res }): MyContext => ({
+      em: orm.em,
+      req,
+      res,
+    }),
   });
 
   apollo.applyMiddleware({ app });

@@ -40,6 +40,7 @@
     "express-session": "^1.17.1",
     "global": "^4.4.0",
     "graphql": "^15.5.0",
+    "ioredis": "^4.23.0",
     "mikro-orm": "^4.4.4",
     "next": "10.0.7",
     "nodemon": "^2.0.7",

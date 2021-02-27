@@ -20,7 +20,7 @@ export class User {
 
   // email
   @Field(() => String)
-  @Property()
+  @Property({ unique: true })
   email!: string;
 
   @Field()

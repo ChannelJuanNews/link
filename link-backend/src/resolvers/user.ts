@@ -15,6 +15,7 @@ import { LOGGER, ERROR } from "../util/logger";
 import argon2 from "argon2";
 
 import validateEmail from "../util/validateEmail";
+import caseInsensitive from "../util/caseInsensitive";
 
 @ObjectType()
 class UserError {
@@ -32,6 +33,9 @@ class UserResponse {
 
   @Field(() => User, { nullable: true })
   user?: User;
+
+  @Field(() => Boolean, { nullable: true })
+  exists?: Boolean;
 }
 
 @Resolver()
@@ -69,6 +73,40 @@ export class UserResolver {
   @Query(() => [User])
   users(@Ctx() { em }: MyContext): Promise<User[]> {
     return em.find(User, {});
+  }
+
+  // check if email exists
+  @Query(() => UserResponse)
+  async emailExists(
+    @Ctx() { em }: MyContext,
+    @Arg("email") email: string
+  ): Promise<UserResponse> {
+    const user = await em.findOne(User, { email: caseInsensitive(email) });
+    if (user)
+      return {
+        exists: true,
+      };
+    return {
+      exists: false,
+    };
+  }
+
+  // check if username exists
+  @Query(() => UserResponse)
+  async usernameExists(
+    @Ctx() { em }: MyContext,
+    @Arg("username") username: string
+  ): Promise<UserResponse> {
+    const user = await em.findOne(User, {
+      username: caseInsensitive(username),
+    });
+    if (user)
+      return {
+        exists: true,
+      };
+    return {
+      exists: false,
+    };
   }
 
   // get user by id
@@ -140,7 +178,12 @@ export class UserResolver {
     @Arg("password") password: string,
     @Ctx() { em, req }: MyContext
   ): Promise<UserResponse> {
-    const user = await em.findOne(User, { $or: [{ email }, { username }] });
+    const user = await em.findOne(User, {
+      $or: [
+        { email: caseInsensitive(email) },
+        { username: caseInsensitive(username) },
+      ],
+    });
 
     if (user) {
       const verified = argon2.verify(user.password, password);
