@@ -23,6 +23,8 @@ import session from "express-session";
 import store from "connect-redis";
 import { MyContext } from "./types";
 
+import cors from "cors";
+
 //const WARN = LOGGER.extend("WARN");
 const PORT = process.env.PORT! || 3001;
 
@@ -41,6 +43,14 @@ const main = async () => {
   // connect our sesssion middleware
   const RedisStore = store(session);
   const RedisClient = redis.createClient();
+
+  // set our cors so api fetching doesn't break in development
+  app.use(
+    cors({
+      origin: process.env.SERVER || "https://localhost:3000",
+      credentials: true,
+    })
+  );
 
   // session middleware that uses redis to store our server-side sessions
   app.use(
@@ -73,7 +83,10 @@ const main = async () => {
     }),
   });
 
-  apollo.applyMiddleware({ app });
+  apollo.applyMiddleware({
+    app,
+    cors: false,
+  });
 
   app
     .listen(PORT, () => {

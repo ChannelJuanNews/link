@@ -48,7 +48,7 @@ export class UserResolver {
       return {
         error: {
           message: "Unauthorized, failed to fetch user profile",
-          code: 40,
+          code: 20,
         },
       };
     }
@@ -146,7 +146,7 @@ export class UserResolver {
             return {
               error: {
                 message: "Username is already taken",
-                code: 40,
+                code: 39,
               },
             };
             break;
@@ -154,7 +154,7 @@ export class UserResolver {
             return {
               error: {
                 message: "Error authenticating",
-                code: 40,
+                code: 35,
               },
             };
         }
@@ -164,7 +164,7 @@ export class UserResolver {
       return {
         error: {
           message: "Please provide a valid email",
-          code: 40,
+          code: 41,
         },
       };
     }
