@@ -4,6 +4,10 @@ export default {
     message: "Unauthorized, failed to fetch user profile",
   },
 
+  "30": {
+    message: "Please provide a valid username or email ",
+  },
+
   "35": {
     message: "Generic Authentication Error (Error Authenticating)",
   },
@@ -20,6 +24,10 @@ export default {
   },
 
   "42": {
+    email: "Email is already taken",
+  },
+
+  "43": {
     message: "Please provide a valid username or email and correct password",
   },
 

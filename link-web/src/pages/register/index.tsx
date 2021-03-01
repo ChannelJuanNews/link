@@ -16,6 +16,8 @@ import InputField from "../../components/InputField";
 
 import { useMutation, useQuery } from "urql";
 
+import { useRouter } from "next/router";
+
 import {
   useRegisterMutation,
   useCheckEmailExistsQuery,
@@ -39,6 +41,8 @@ const Register: React.FC<registerProps> = ({}) => {
   const [userTaken, setUserTaken] = useState(false);
   const [emailTaken, setEmailTaken] = useState(false);
 
+  const router = useRouter();
+
   return (
     <Wrapper variant="regular">
       <Formik
@@ -56,21 +60,24 @@ const Register: React.FC<registerProps> = ({}) => {
             );
             console.log("the reutnred errors are", errors);
             setErrors(errors);
+          } else {
+            router.push("/profile");
           }
         }}
       >
-        {({ values, handleChange, isSubmitting }) => (
+        {({ values, handleChange, isSubmitting, resetForm, setFieldValue }) => (
           <Form
             onKeyUp={(e) => {
-              console.log("we are here");
+              //console.log("we are here");
             }}
             onChange={async (e: any) => {
               switch (e.target.name) {
                 case "email":
                   if (validateEmail(e.target?.value)) {
-                    console.log("email value is", e.target.value);
-                    const result = await checkEmail({ email: e.target.value });
-                    console.log(result);
+                    //console.log("email value is", e.target.value);
+                    const result = await checkEmail();
+
+                    console.log("THE RESULT IS", result);
                   }
 
                   //checkEmail(e.target.value);
@@ -80,7 +87,7 @@ const Register: React.FC<registerProps> = ({}) => {
                 default:
                   return;
               }
-              console.log(e.target.name);
+              //console.log(e.target.name);
             }}
           >
             <Box m={8}>
@@ -89,6 +96,7 @@ const Register: React.FC<registerProps> = ({}) => {
                 placeholder="email@email.com"
                 label="Email"
                 type="email"
+                setFieldValue={setFieldValue}
               />
             </Box>
             <Box m={8}>
@@ -97,6 +105,7 @@ const Register: React.FC<registerProps> = ({}) => {
                 placeholder="username"
                 label="Username"
                 type="text"
+                setFieldValue={setFieldValue}
               />
             </Box>
 

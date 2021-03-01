@@ -1,4 +1,4 @@
-export default function caseInsensitive(str: String): RegExp {
+export default function caseInsensitive(str: String = ""): RegExp {
   const len = str.length;
   let exp = "^";
   for (let i = 0; i < len; i++) {

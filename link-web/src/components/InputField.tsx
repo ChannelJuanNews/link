@@ -1,4 +1,4 @@
-import React, { InputHTMLAttributes } from "react";
+import React, { InputHTMLAttributes, useState } from "react";
 
 import {
   FormControl,
@@ -16,13 +16,18 @@ import { useField } from "formik";
 import { AtSignIcon, CheckIcon, ViewIcon, CloseIcon } from "@chakra-ui/icons";
 
 type InputFieldProps = InputHTMLAttributes<HTMLInputElement> & {
-  name: string;
-  label: string;
-  placeholder?: string;
+  name: String;
+  label: String;
+  placeholder?: String;
+  setFieldValue?: Function;
 };
 
 const InputField: React.FC<InputFieldProps> = ({ size: _, ...props }) => {
   const [field, { error }] = useField(props);
+  const [toggle, setToggle] = useState(false);
+
+  // make the queries at the state
+  //console.log(props);
 
   // username field
   if (props.name === "username") {
@@ -30,17 +35,27 @@ const InputField: React.FC<InputFieldProps> = ({ size: _, ...props }) => {
       <FormControl
         isInvalid={!!error}
         onKeyUp={(e) => {
-          console.log("we are here formcontrol", e);
+          //console.log("we are here formcontrol (username)", e);
         }}
       >
         <FormLabel htmlFor={field.name}>{props.label}</FormLabel>
         <InputGroup>
-          <InputLeftAddon bgColor="blackAlpha.400" children={<AtSignIcon />} />
+          <InputLeftAddon bgColor="linkedin.500" children={<AtSignIcon />} />
           <Input {...field} {...props} />
 
           {error ? (
             <InputRightElement
-              children={error ? <CloseIcon /> : <CheckIcon color="green.500" />}
+              children={
+                error ? (
+                  <CloseIcon
+                    onClick={(e) => {
+                      props.setFieldValue("username", "");
+                    }}
+                  />
+                ) : (
+                  <CheckIcon color="green.500" />
+                )
+              }
             />
           ) : null}
         </InputGroup>
@@ -57,14 +72,13 @@ const InputField: React.FC<InputFieldProps> = ({ size: _, ...props }) => {
       <FormControl isInvalid={!!error}>
         <FormLabel htmlFor={field.name}>{props.label}</FormLabel>
         <InputGroup>
-          <Input {...field} {...props} />
+          <Input {...field} {...props} type={toggle ? "text" : "password"} />
           <InputRightElement
+            onClick={(e) => setToggle(!toggle)}
             children={
               <IconButton
                 arai-label="toggle-pass"
-                bgColor="blackAlpha.800"
-                _hover={"rgba(0,0.0,0)"}
-                outline="none"
+                bgColor="linkedin.500"
                 icon={<ViewIcon outline="none" borderStyle="none" />}
               />
             }
@@ -80,7 +94,7 @@ const InputField: React.FC<InputFieldProps> = ({ size: _, ...props }) => {
     <FormControl
       isInvalid={!!error}
       onKeyUp={(e) => {
-        console.log("we are here formcontrol", e);
+        //console.log("we are here formcontrol", e);
       }}
       onSubmit={(e) => console.log("submit mail", e)}
     >

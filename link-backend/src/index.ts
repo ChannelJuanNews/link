@@ -47,7 +47,7 @@ const main = async () => {
   // set our cors so api fetching doesn't break in development
   app.use(
     cors({
-      origin: process.env.SERVER || "https://localhost:3000",
+      origin: process.env.SERVER || "http://localhost:3000",
       credentials: true,
     })
   );
@@ -85,7 +85,10 @@ const main = async () => {
 
   apollo.applyMiddleware({
     app,
-    cors: false,
+    cors: {
+      credentials: true,
+      origin: process.env.SERVER || "http://localhost:3000",
+    },
   });
 
   app

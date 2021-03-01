@@ -12,6 +12,8 @@ import { MyContext } from "../types";
 
 import { LOGGER, ERROR } from "../util/logger";
 
+import { EntityManager } from "@mikro-orm/postgresql";
+
 import argon2 from "argon2";
 
 import validateEmail from "../util/validateEmail";
@@ -121,36 +123,80 @@ export class UserResolver {
     @Arg("email") email: string,
     @Arg("username") username: string,
     @Arg("password") password: string,
-    @Ctx() { em }: MyContext
+    @Ctx() { em, req }: MyContext
   ): Promise<UserResponse> {
     // make sure that the email is valid
     if (validateEmail(email)) {
       const hashed = await argon2.hash(password);
 
       try {
+        const result = await (em as EntityManager)
+          .createQueryBuilder(User)
+          .getKnexQuery()
+          .insert({
+            email: email,
+            username: username,
+            password: hashed,
+            created_at: new Date(),
+            updated_at: new Date(),
+          })
+          .returning("*");
+
+        if (result.length < 1)
+          throw new Error("Failed to insert new user into database (register)");
+
+        if (result.length > 1)
+          throw new Error(
+            "Query returned more than 1 newly reigstered user (register)"
+          );
+
+        // cast the result as type User
+        const newUser: User = result[0];
+        // TODO: log to mixpanel that a new user has been created
+        /* 
         const newUser = await em.create(User, {
           email,
           username,
           password: hashed,
-        });
+        }); */
 
-        await em.persistAndFlush(newUser);
-        LOGGER("NEW USER CREATED");
+        //await em.persistAndFlush(newUser[0]);
+
+        req.session!.userId = newUser.id;
+        LOGGER("NEW USER REGISTERED & LOGGED IN ", newUser);
+
         return {
           user: newUser,
         };
       } catch (e) {
         switch (String(e.code)) {
           case "23505":
-            LOGGER("DUPLICATE KEY ERROR");
-            return {
-              error: {
-                message: "Username is already taken",
-                code: 39,
-              },
-            };
+            LOGGER("DUPLICATE ERROR:", e?.constraint);
+            if (String(e?.constraint) == "user_email_unique") {
+              return {
+                error: {
+                  message: `Email is already taken`,
+                  code: 42,
+                },
+              };
+            } else if (String(e?.constraint) == "user_username_unique") {
+              return {
+                error: {
+                  message: `Email is already taken`,
+                  code: 39,
+                },
+              };
+            } else {
+              return {
+                error: {
+                  message: "Error authenticating",
+                  code: 35,
+                },
+              };
+            }
             break;
           default:
+            LOGGER("GENERIC ERROR: FAILED TO REGISTER USER");
             return {
               error: {
                 message: "Error authenticating",
@@ -173,11 +219,20 @@ export class UserResolver {
   // log a user in
   @Mutation(() => UserResponse)
   async login(
-    @Arg("email") email: string,
-    @Arg("username") username: string,
+    @Arg("email", { nullable: true }) email: string,
+    @Arg("username", { nullable: true }) username: string,
     @Arg("password") password: string,
     @Ctx() { em, req }: MyContext
   ): Promise<UserResponse> {
+    if (!!username && !!email) {
+      return {
+        error: {
+          message: "Please include a username or password",
+          code: 30,
+        },
+      };
+    }
+
     const user = await em.findOne(User, {
       $or: [
         { email: caseInsensitive(email) },
@@ -199,7 +254,7 @@ export class UserResolver {
       error: {
         message:
           "Please provide a valid username or email and correct password",
-        code: 40,
+        code: 42,
       },
     };
   }
