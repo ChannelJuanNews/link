@@ -79,8 +79,8 @@ export type MutationRegisterUserArgs = {
 
 export type MutationLoginArgs = {
   password: Scalars['String'];
-  username: Scalars['String'];
-  email: Scalars['String'];
+  username?: Maybe<Scalars['String']>;
+  email?: Maybe<Scalars['String']>;
 };
 
 
@@ -93,6 +93,26 @@ export type MutationUpdateUserArgs = {
 export type MutationDeleteUserArgs = {
   id: Scalars['Float'];
 };
+
+export type LoginMutationVariables = Exact<{
+  username?: Maybe<Scalars['String']>;
+  password: Scalars['String'];
+}>;
+
+
+export type LoginMutation = (
+  { __typename?: 'Mutation' }
+  & { login: (
+    { __typename?: 'UserResponse' }
+    & { user?: Maybe<(
+      { __typename?: 'User' }
+      & Pick<User, 'id'>
+    )>, error?: Maybe<(
+      { __typename?: 'UserError' }
+      & Pick<UserError, 'message' | 'code'>
+    )> }
+  ) }
+);
 
 export type RegisterMutationVariables = Exact<{
   email: Scalars['String'];
@@ -115,33 +135,75 @@ export type RegisterMutation = (
   )> }
 );
 
-export type CheckEmailExistsQueryVariables = Exact<{
+export type EmailExistsQueryVariables = Exact<{
   email: Scalars['String'];
 }>;
 
 
-export type CheckEmailExistsQuery = (
+export type EmailExistsQuery = (
   { __typename?: 'Query' }
   & { emailExists: (
     { __typename?: 'UserResponse' }
     & Pick<UserResponse, 'exists'>
+    & { error?: Maybe<(
+      { __typename?: 'UserError' }
+      & Pick<UserError, 'message' | 'code'>
+    )> }
   ) }
 );
 
-export type CheckUsernameExistsQueryVariables = Exact<{
+export type MeQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type MeQuery = (
+  { __typename?: 'Query' }
+  & { me: (
+    { __typename?: 'UserResponse' }
+    & { user?: Maybe<(
+      { __typename?: 'User' }
+      & Pick<User, 'id' | 'username' | 'created_at'>
+    )>, error?: Maybe<(
+      { __typename?: 'UserError' }
+      & Pick<UserError, 'message' | 'code'>
+    )> }
+  ) }
+);
+
+export type UsernameExistsQueryVariables = Exact<{
   username: Scalars['String'];
 }>;
 
 
-export type CheckUsernameExistsQuery = (
+export type UsernameExistsQuery = (
   { __typename?: 'Query' }
   & { usernameExists: (
     { __typename?: 'UserResponse' }
     & Pick<UserResponse, 'exists'>
+    & { error?: Maybe<(
+      { __typename?: 'UserError' }
+      & Pick<UserError, 'message' | 'code'>
+    )> }
   ) }
 );
 
 
+export const LoginDocument = gql`
+    mutation Login($username: String, $password: String!) {
+  login(username: $username, password: $password) {
+    user {
+      id
+    }
+    error {
+      message
+      code
+    }
+  }
+}
+    `;
+
+export function useLoginMutation() {
+  return Urql.useMutation<LoginMutation, LoginMutationVariables>(LoginDocument);
+};
 export const RegisterDocument = gql`
     mutation Register($email: String!, $username: String!, $password: String!) {
   registerUser(email: $email, username: $username, password: $password) {
@@ -162,25 +224,52 @@ export const RegisterDocument = gql`
 export function useRegisterMutation() {
   return Urql.useMutation<RegisterMutation, RegisterMutationVariables>(RegisterDocument);
 };
-export const CheckEmailExistsDocument = gql`
-    query checkEmailExists($email: String!) {
+export const EmailExistsDocument = gql`
+    query emailExists($email: String!) {
   emailExists(email: $email) {
     exists
+    error {
+      message
+      code
+    }
   }
 }
     `;
 
-export function useCheckEmailExistsQuery(options: Omit<Urql.UseQueryArgs<CheckEmailExistsQueryVariables>, 'query'> = {}) {
-  return Urql.useQuery<CheckEmailExistsQuery>({ query: CheckEmailExistsDocument, ...options });
+export function useEmailExistsQuery(options: Omit<Urql.UseQueryArgs<EmailExistsQueryVariables>, 'query'> = {}) {
+  return Urql.useQuery<EmailExistsQuery>({ query: EmailExistsDocument, ...options });
 };
-export const CheckUsernameExistsDocument = gql`
-    query checkUsernameExists($username: String!) {
+export const MeDocument = gql`
+    query Me {
+  me {
+    user {
+      id
+      username
+      created_at
+    }
+    error {
+      message
+      code
+    }
+  }
+}
+    `;
+
+export function useMeQuery(options: Omit<Urql.UseQueryArgs<MeQueryVariables>, 'query'> = {}) {
+  return Urql.useQuery<MeQuery>({ query: MeDocument, ...options });
+};
+export const UsernameExistsDocument = gql`
+    query usernameExists($username: String!) {
   usernameExists(username: $username) {
     exists
+    error {
+      message
+      code
+    }
   }
 }
     `;
 
-export function useCheckUsernameExistsQuery(options: Omit<Urql.UseQueryArgs<CheckUsernameExistsQueryVariables>, 'query'> = {}) {
-  return Urql.useQuery<CheckUsernameExistsQuery>({ query: CheckUsernameExistsDocument, ...options });
+export function useUsernameExistsQuery(options: Omit<Urql.UseQueryArgs<UsernameExistsQueryVariables>, 'query'> = {}) {
+  return Urql.useQuery<UsernameExistsQuery>({ query: UsernameExistsDocument, ...options });
 };

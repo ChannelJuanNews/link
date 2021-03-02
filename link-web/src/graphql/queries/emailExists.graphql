@@ -1,0 +1,9 @@
+query emailExists($email: String!) {
+  emailExists(email: $email) {
+    exists
+    error {
+      message
+      code
+    }
+  }
+}

@@ -7,6 +7,10 @@ import {
   Input,
   Box,
   Button,
+  Flex,
+  Spacer,
+  Link,
+  Text,
 } from "@chakra-ui/react";
 
 import { Formik, Form } from "formik";
@@ -14,14 +18,16 @@ import { Formik, Form } from "formik";
 import Wrapper from "../../components/Wrapper";
 import InputField from "../../components/InputField";
 
+import NextLink from "next/link";
+
 import { useMutation, useQuery } from "urql";
 
 import { useRouter } from "next/router";
 
 import {
   useRegisterMutation,
-  useCheckEmailExistsQuery,
-  useCheckUsernameExistsQuery,
+  useUsernameExistsQuery,
+  useEmailExistsQuery,
 } from "../../generated/graphql";
 
 import validateEmail from "../../util/validateEmail";
@@ -35,8 +41,12 @@ const Register: React.FC<registerProps> = ({}) => {
     register,
   ] = useRegisterMutation();
 
-  const [emailResult, checkEmail] = useCheckEmailExistsQuery();
-  const [usernameResult, checkUsername] = useCheckUsernameExistsQuery();
+  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+
+  const [emailResult, checkEmail] = useEmailExistsQuery();
+  const [usernameResult, checkUsername] = useUsernameExistsQuery();
 
   const [userTaken, setUserTaken] = useState(false);
   const [emailTaken, setEmailTaken] = useState(false);
@@ -66,69 +76,87 @@ const Register: React.FC<registerProps> = ({}) => {
         }}
       >
         {({ values, handleChange, isSubmitting, resetForm, setFieldValue }) => (
-          <Form
-            onKeyUp={(e) => {
-              //console.log("we are here");
-            }}
-            onChange={async (e: any) => {
-              switch (e.target.name) {
-                case "email":
-                  if (validateEmail(e.target?.value)) {
-                    //console.log("email value is", e.target.value);
-                    const result = await checkEmail();
-
-                    console.log("THE RESULT IS", result);
-                  }
-
-                  //checkEmail(e.target.value);
-                  break;
-                case "username":
-                //checkUsername(e.target.value);
-                default:
-                  return;
-              }
-              //console.log(e.target.name);
-            }}
-          >
+          <>
             <Box m={8}>
-              <InputField
-                name="email"
-                placeholder="email@email.com"
-                label="Email"
-                type="email"
-                setFieldValue={setFieldValue}
-              />
+              <Text fontSize={"5xl"}> Register </Text>
             </Box>
-            <Box m={8}>
-              <InputField
-                name="username"
-                placeholder="username"
-                label="Username"
-                type="text"
-                setFieldValue={setFieldValue}
-              />
-            </Box>
+            <Form
+              onKeyUp={(e) => {
+                //console.log("we are here");
+              }}
+              onChange={async (e: any) => {
+                switch (e.target.name) {
+                  case "email":
+                    if (validateEmail(e.target?.value)) {
+                      //console.log("email value is", e.target.value);
+                      const result = await checkEmail();
 
-            <Box m={8}>
-              <InputField
-                name="password"
-                placeholder="*******"
-                label="Password"
-                type="password"
-              />
-            </Box>
+                      console.log("THE RESULT IS", result);
+                    }
 
-            <Box mx="auto">
-              <Button
-                type="submit"
-                isLoading={isSubmitting}
-                colorScheme="linkedin"
-              >
-                {" "}
-                Register{" "}
-              </Button>
-            </Box>
-          </Form>
+                    //checkEmail(e.target.value);
+                    break;
+                  case "username":
+                  //checkUsername(e.target.value);
+                  default:
+                    return;
+                }
+                //console.log(e.target.name);
+              }}
+            >
+              <Box m={8}>
+                <InputField
+                  name="email"
+                  placeholder="email@email.com"
+                  label="Email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+              </Box>
+              <Box m={8}>
+                <InputField
+                  name="username"
+                  placeholder="username"
+                  label="Username"
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                />
+              </Box>
+
+              <Box m={8}>
+                <InputField
+                  name="password"
+                  placeholder="*******"
+                  label="Password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+              </Box>
+
+              <Box mx="auto" m={8}>
+                <Flex>
+                  <Button
+                    type="submit"
+                    isLoading={fetching}
+                    colorScheme="linkedin"
+                  >
+                    {" "}
+                    Register{" "}
+                  </Button>
+                  <Spacer />
+                  <NextLink href="/login">
+                    <Link my={5}>
+                      {" "}
+                      <Text> Already have an account?</Text>
+                    </Link>
+                  </NextLink>
+                </Flex>
+              </Box>
+            </Form>
+          </>
         )}
       </Formik>
     </Wrapper>

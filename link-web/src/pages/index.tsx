@@ -4,7 +4,7 @@ const Index = () => {
   return (
     <>
       {" "}
-      <NavBar /> <div> Hello World </div>{" "}
+      <NavBar landing={true} /> <div> Hello World </div>{" "}
     </>
   );
 };

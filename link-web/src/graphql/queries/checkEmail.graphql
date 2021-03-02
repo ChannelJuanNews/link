@@ -1,5 +1,0 @@
-query checkEmailExists($email: String!) {
-  emailExists(email: $email) {
-    exists
-  }
-}

@@ -77,7 +77,7 @@ const InputField: React.FC<InputFieldProps> = ({ size: _, ...props }) => {
             onClick={(e) => setToggle(!toggle)}
             children={
               <IconButton
-                arai-label="toggle-pass"
+                aria-label="toggle-pass"
                 bgColor="linkedin.500"
                 icon={<ViewIcon outline="none" borderStyle="none" />}
               />
