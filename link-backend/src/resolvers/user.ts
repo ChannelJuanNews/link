@@ -43,10 +43,11 @@ class UserResponse {
 @Resolver()
 export class UserResolver {
   @Query(() => UserResponse)
-  async me(@Ctx() { em, req }: MyContext): Promise<UserResponse> {
+  async me(@Ctx() { em, req, res }: MyContext): Promise<UserResponse> {
     if (!req.session.userId) {
-      console.log("no user id exists");
+      console.log("no user id exists", res);
       // mixpanel insertions here
+
       return {
         error: {
           message: "Unauthorized, failed to fetch user profile",
@@ -206,7 +207,7 @@ export class UserResolver {
         }
       }
     } else {
-      ERROR("ERROR CANNOT VALIDATE EMAIL => ", email);
+      ERROR("ERROR CANNOT VALIDATE EMAIL => ", email, email.length);
       return {
         error: {
           message: "Please provide a valid email",
@@ -224,7 +225,8 @@ export class UserResolver {
     @Arg("password") password: string,
     @Ctx() { em, req }: MyContext
   ): Promise<UserResponse> {
-    if (!!username && !!email) {
+    // if no username or email is present, throw an error
+    if (!username && !email) {
       return {
         error: {
           message: "Please include a username or password",

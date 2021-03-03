@@ -62,13 +62,13 @@ const Register: React.FC<registerProps> = ({}) => {
           password: "",
         }}
         onSubmit={async (values, { setErrors }) => {
-          console.log(values);
-          const response = await register(values);
+          //console.log(values, email, username, password);
+          const response = await register({ username : username, email : email, password : password});
           if (response.data?.registerUser.error) {
             const errors = processRegisterErrors(
               response.data?.registerUser.error
             );
-            console.log("the reutnred errors are", errors);
+            console.log("the returned errors are", errors);
             setErrors(errors);
           } else {
             router.push("/profile");

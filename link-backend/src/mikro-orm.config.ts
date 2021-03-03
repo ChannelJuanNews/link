@@ -2,7 +2,7 @@ import { User } from "./entities/User";
 import { MikroORM } from "@mikro-orm/core";
 import path from "path";
 
-const POSTGRES_USER = process.env.POSTGRES_USER! || "juanruelas";
+const POSTGRES_USER = process.env.POSTGRES_USER! || "gerardo";
 const POSTGRES_HOST = process.env.POSTGRES_HOST! || "localhost";
 const POSTGRES_DB = process.env.POSTGRES_DB! || "link";
 const POSTGRES_PASS = process.env.POSTGRES_PASS || "";

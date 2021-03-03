@@ -20,6 +20,8 @@ import Image from "next/image";
 
 import NextLink from "next/link";
 
+import HamburgerIcon from "../components/icons/hamburger";
+
 interface NavBarProps {
   page?: String;
   profile?: Boolean;
@@ -57,7 +59,10 @@ export const NavBar: React.FC<NavBarProps> = ({
           </>
         )}
 
-        <Button onClick={onOpen}>Open Drawer</Button>
+        <Button onClick={onOpen}>
+          {" "}
+          <HamburgerIcon />{" "}
+        </Button>
       </Box>
       <Drawer placement="right" onClose={onClose} isOpen={isOpen}>
         <DrawerOverlay />
