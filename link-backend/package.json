@@ -28,6 +28,7 @@
     "@types/express-session": "^1.17.3",
     "@types/node": "^14.14.31",
     "@types/redis": "^2.8.28",
+    "@types/valid-url": "^1.0.3",
     "@types/yargs": "^16.0.0",
     "apollo-server-express": "^2.21.0",
     "argon2": "^0.27.1",
@@ -50,7 +51,8 @@
     "redis": "^3.0.2",
     "reflect-metadata": "^0.1.13",
     "ts-node": "^9.1.1",
-    "type-graphql": "^1.1.1"
+    "type-graphql": "^1.1.1",
+    "valid-url": "^1.0.9"
   },
   "devDependencies": {
     "@types/cors": "^2.8.10",

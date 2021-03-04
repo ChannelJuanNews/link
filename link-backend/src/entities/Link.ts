@@ -1,10 +1,4 @@
-import {
-  PrimaryKey,
-  Entity,
-  Property,
-  ManyToOne,
-  IdentifiedReference,
-} from "@mikro-orm/core";
+import { PrimaryKey, Entity, Property, ManyToOne } from "@mikro-orm/core";
 
 import { ObjectType, Field, Int } from "type-graphql";
 
@@ -22,6 +16,18 @@ export class Link {
   url!: string;
 
   @Field(() => String)
+  @Property({ nullable: true })
+  icon?: string;
+
+  @Field(() => Number)
+  @Property({ nullable: false })
+  num_clicks: number = 0;
+
+  @Field(() => Number)
+  @Property({ nullable: true })
+  num_views: number = 0;
+
+  @Field(() => String)
   @Property({ type: "date" })
   created_at = new Date();
 
@@ -29,6 +35,12 @@ export class Link {
   @Property({ type: "date", onUpdate: () => new Date() })
   updated_at = new Date();
 
-  @ManyToOne(() => User, { wrappedReference: true, nullable: true })
-  user?: IdentifiedReference<User>;
+  @ManyToOne(() => User, { nullable: false })
+  user!: User;
+
+  constructor(url: string, user: User, icon?: string) {
+    this.url = url;
+    this.icon = icon;
+    this.user = user;
+  }
 }

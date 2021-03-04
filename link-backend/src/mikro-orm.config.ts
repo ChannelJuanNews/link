@@ -1,4 +1,5 @@
 import { User } from "./entities/User";
+import { Link } from "./entities/Link";
 import { MikroORM } from "@mikro-orm/core";
 import path from "path";
 
@@ -15,7 +16,7 @@ export default {
   dbName: POSTGRES_DB,
   type: "postgresql",
   debug: DEBUG,
-  entities: [User],
+  entities: [User, Link],
   migrations: {
     path: path.join(__dirname + "/migrations"),
     pattern: /^[\w-]+\d+\.[tj]s$/,

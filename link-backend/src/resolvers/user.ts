@@ -10,11 +10,15 @@ import {
 } from "type-graphql";
 import { MyContext } from "../types";
 
+import { Link } from "../entities/Link";
+
 import { LOGGER, ERROR } from "../util/logger";
 
 import { EntityManager } from "@mikro-orm/postgresql";
 
 import argon2 from "argon2";
+
+import isValidUrl from "../util/isValidUrl";
 
 import validateEmail from "../util/validateEmail";
 import caseInsensitive from "../util/caseInsensitive";
@@ -36,6 +40,9 @@ class UserResponse {
   @Field(() => User, { nullable: true })
   user?: User;
 
+  @Field(() => Link, { nullable: true })
+  link?: Link;
+
   @Field(() => Boolean, { nullable: true })
   exists?: Boolean;
 }
@@ -43,9 +50,9 @@ class UserResponse {
 @Resolver()
 export class UserResolver {
   @Query(() => UserResponse)
-  async me(@Ctx() { em, req, res }: MyContext): Promise<UserResponse> {
-    if (!req.session.userId) {
-      console.log("no user id exists", res);
+  async me(@Ctx() { em, req }: MyContext): Promise<UserResponse> {
+    if (!req?.session?.userId) {
+      LOGGER("userid does it exist on our session storage");
       // mixpanel insertions here
 
       return {
@@ -56,9 +63,13 @@ export class UserResolver {
       };
     }
 
-    const user = await em.findOne(User, { id: req.session.userId });
+    const u = await em.findOne(User, { id: req.session.userId });
 
-    if (user) {
+    if (u) {
+      const user = await em.populate(u, ["links"]);
+
+      console.log(user);
+
       return {
         user: user,
       };
@@ -259,6 +270,52 @@ export class UserResolver {
         code: 42,
       },
     };
+  }
+
+  @Mutation(() => UserResponse)
+  async addLink(
+    @Arg("url") url: string,
+    @Arg("icon", { nullable: true }) icon: string,
+    @Ctx() { em, req }: MyContext
+  ): Promise<UserResponse> {
+    if (isValidUrl(url)) {
+      const user = await em.findOne(User, { id: req.session.userId });
+      if (user) {
+        // this is the business logic
+        // if we
+        try {
+          // create the new link
+          const newLink = await em.create(Link, {
+            url: url,
+            user: user,
+            icon: icon,
+          });
+          // save the new linnk
+          await em.persistAndFlush(newLink);
+          // add the reference id to the user table
+          user.links.add(newLink);
+
+          await em.persistAndFlush(user);
+
+          return {
+            link: newLink,
+          };
+        } catch (e) {}
+      }
+      return {
+        error: {
+          message: "Unauthorized",
+          code: 50,
+        },
+      };
+    } else {
+      return {
+        error: {
+          message: `URL Validation Error: ${url} is not a valid URL`,
+          code: 42,
+        },
+      };
+    }
   }
 
   // update user by id

@@ -1,5 +1,12 @@
-import { PrimaryKey, Entity, Property } from "@mikro-orm/core";
+import {
+  PrimaryKey,
+  Entity,
+  Property,
+  Collection,
+  OneToMany,
+} from "@mikro-orm/core";
 import { ObjectType, Field, Int } from "type-graphql";
+import { Link } from "./Link";
 
 @ObjectType()
 @Entity()
@@ -40,4 +47,9 @@ export class User {
   @Field(() => String)
   @Property({ type: "date", onUpdate: () => new Date() })
   updated_at = new Date();
+
+  // delete user's links when user is deleted
+  @OneToMany(() => Link, (link) => link.user)
+  @Field(() => [Link])
+  links = new Collection<Link>(this);
 }
