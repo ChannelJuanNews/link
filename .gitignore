@@ -22,6 +22,7 @@ package-lock.json
 /out/
 .next
 ./link-web/.next/
+link-web/.next/
 
 # production
 /build

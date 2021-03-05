@@ -68,8 +68,6 @@ export class UserResolver {
     if (u) {
       const user = await em.populate(u, ["links"]);
 
-      console.log(user);
-
       return {
         user: user,
       };
@@ -273,9 +271,19 @@ export class UserResolver {
   }
 
   @Mutation(() => UserResponse)
+  async logout(@Ctx() { em, req }: MyContext): Promise<UserResponse> {
+    return {
+      error: {
+        message: "asdf",
+        code: 34,
+      },
+    };
+  }
+
+  @Mutation(() => UserResponse)
   async addLink(
     @Arg("url") url: string,
-    @Arg("icon", { nullable: true }) icon: string,
+    @Arg("icon", { nullable: true }) icon: string = "",
     @Ctx() { em, req }: MyContext
   ): Promise<UserResponse> {
     if (isValidUrl(url)) {
