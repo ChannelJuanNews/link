@@ -33,7 +33,11 @@ const main = async () => {
   // connect to the database and configure it with our config file
   const orm = await MikroORM.init(mikro_config);
   // create and run our migrations on connection
-  await orm.getMigrator().up();
+
+  // TODO: Bug, wont init graphql, or express server if we await here
+  // call to up() never returns??
+  //await orm.getMigrator().up();
+  orm.getMigrator().up();
 
   LOGGER("Main function called");
 
