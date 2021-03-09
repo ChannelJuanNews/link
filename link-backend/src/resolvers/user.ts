@@ -33,6 +33,15 @@ class UserError {
 }
 
 @ObjectType()
+class Success {
+  @Field()
+  message!: String;
+
+  @Field()
+  code!: number;
+}
+
+@ObjectType()
 class UserResponse {
   @Field(() => UserError, { nullable: true })
   error?: UserError;
@@ -43,6 +52,9 @@ class UserResponse {
   @Field(() => Link, { nullable: true })
   link?: Link;
 
+  @Field(() => Success, { nullable: true })
+  success?: Success;
+
   @Field(() => Boolean, { nullable: true })
   exists?: Boolean;
 }
@@ -51,7 +63,7 @@ class UserResponse {
 export class UserResolver {
   @Query(() => UserResponse)
   async me(@Ctx() { em, req }: MyContext): Promise<UserResponse> {
-    if (!req?.session?.userId) {
+    if (!req?.session?.user_id) {
       LOGGER("userid does it exist on our session storage");
       // mixpanel insertions here
 
@@ -63,7 +75,7 @@ export class UserResolver {
       };
     }
 
-    const u = await em.findOne(User, { id: req.session.userId });
+    const u = await em.findOne(User, { id: req.session.user_id });
 
     if (u) {
       const user = await em.populate(u, ["links"]);
@@ -172,7 +184,7 @@ export class UserResolver {
 
         //await em.persistAndFlush(newUser[0]);
 
-        req.session!.userId = newUser.id;
+        req.session!.user_id = newUser.id;
         LOGGER("NEW USER REGISTERED & LOGGED IN ", newUser);
 
         return {
@@ -254,7 +266,7 @@ export class UserResolver {
     if (user) {
       const verified = argon2.verify(user.password, password);
       if (verified) {
-        req.session!.userId = user.id;
+        req.session!.user_id = user.id;
         return {
           user: user,
         };
@@ -271,11 +283,42 @@ export class UserResolver {
   }
 
   @Mutation(() => UserResponse)
-  async logout(@Ctx() { em, req }: MyContext): Promise<UserResponse> {
+  async logout(@Ctx() { req }: MyContext): Promise<UserResponse> {
+    // TODO: break logout function out into its own utility function
+    const logout = () => {
+      try {
+        return new Promise((resolve, reject) => {
+          req.session.destroy((err) => {
+            if (err) {
+              return reject(err);
+            }
+            return resolve(true);
+          });
+        });
+      } catch (e) {
+        // TODO:
+        // log event with mixpanel
+        LOGGER("ERROR LOGGING OUT", e);
+        return {
+          error: {
+            message: "Failed to log user out",
+            code: 70,
+          },
+        };
+      }
+    };
+
+    const result = await logout();
+
+    if (result) {
+      return { success: { message: "Successfully logged out", code: 10 } };
+    }
+
+    // default return a success message
     return {
       error: {
-        message: "asdf",
-        code: 34,
+        message: "Failed to log user out",
+        code: 70,
       },
     };
   }
@@ -287,7 +330,7 @@ export class UserResolver {
     @Ctx() { em, req }: MyContext
   ): Promise<UserResponse> {
     if (isValidUrl(url)) {
-      const user = await em.findOne(User, { id: req.session.userId });
+      const user = await em.findOne(User, { id: req.session.user_id });
       if (user) {
         // this is the business logic
         // if we

@@ -43,6 +43,8 @@ export type UserResponse = {
   __typename?: 'UserResponse';
   error?: Maybe<UserError>;
   user?: Maybe<User>;
+  link?: Maybe<Link>;
+  success?: Maybe<Success>;
   exists?: Maybe<Scalars['Boolean']>;
 };
 
@@ -59,12 +61,32 @@ export type User = {
   username: Scalars['String'];
   created_at: Scalars['String'];
   updated_at: Scalars['String'];
+  links: Array<Link>;
+};
+
+export type Link = {
+  __typename?: 'Link';
+  id: Scalars['Int'];
+  url: Scalars['String'];
+  icon: Scalars['String'];
+  num_clicks: Scalars['Float'];
+  num_views: Scalars['Float'];
+  created_at: Scalars['String'];
+  updated_at: Scalars['String'];
+};
+
+export type Success = {
+  __typename?: 'Success';
+  message: Scalars['String'];
+  code: Scalars['Float'];
 };
 
 export type Mutation = {
   __typename?: 'Mutation';
   registerUser?: Maybe<UserResponse>;
   login: UserResponse;
+  logout: UserResponse;
+  addLink: UserResponse;
   updateUser: User;
   deleteUser: Scalars['Boolean'];
 };
@@ -81,6 +103,12 @@ export type MutationLoginArgs = {
   password: Scalars['String'];
   username?: Maybe<Scalars['String']>;
   email?: Maybe<Scalars['String']>;
+};
+
+
+export type MutationAddLinkArgs = {
+  icon?: Maybe<Scalars['String']>;
+  url: Scalars['String'];
 };
 
 
