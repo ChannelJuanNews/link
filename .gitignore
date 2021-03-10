@@ -20,7 +20,7 @@ dump.rdb
 
 #migration files 
 link-backend/src/migrations/
-
+link-backend/dump.rdb  
 
 # next.js
 /.next/
