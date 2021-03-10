@@ -1,8 +1,18 @@
+////////////////////////////////////////////////////////////
+// MODULE IMPORTS
+////////////////////////////////////////////////////////////
+
+
 // import our environment variables
 import * as dotenv from "dotenv";
 dotenv.config();
 
-//
+// Alternative Syntax, typescript does this for us
+//const path = require('path');
+//require('dotenv').config({path: path.resolve(__dirname, '../.env')});
+
+
+console.log("-------------------------------------------------");
 import "reflect-metadata";
 // import our ORM
 import { MikroORM } from "@mikro-orm/core";
@@ -17,12 +27,10 @@ import { HelloResolver } from "./resolvers/hello";
 import { UserResolver } from "./resolvers/user";
 // loggers for io
 import { LOGGER, ERROR } from "./util/logger";
-
 import redis from "redis";
 import session from "express-session";
 import store from "connect-redis";
 import { MyContext } from "./types";
-
 import cors from "cors";
 
 //const WARN = LOGGER.extend("WARN");
@@ -32,14 +40,13 @@ const PORT = process.env.PORT! || 3001;
 const main = async () => {
   // connect to the database and configure it with our config file
   const orm = await MikroORM.init(mikro_config);
-  // create and run our migrations on connection
+  
 
-  // TODO: Bug, wont init graphql, or express server if we await here
-  // call to up() never returns??
-  //await orm.getMigrator().up();
-  orm.getMigrator().up();
+  // create and run our migrations on connection
+  await orm.getMigrator().up();
 
   LOGGER("Main function called");
+  ERROR("ERROR GOES HERE")
 
   // instantiate our express applicaiton
   const app = express();

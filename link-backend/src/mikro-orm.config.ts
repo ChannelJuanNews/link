@@ -3,13 +3,7 @@ import { Link } from "./entities/Link";
 import { MikroORM } from "@mikro-orm/core";
 import path from "path";
 
-// TODO: properly import environment variables on this file.
-// On Fresh installs, this breaks bc we have not yet imported dotenv when creating the
-// migration. And we have not imported from the local .env file.
-// For now leaving this as hard coded.
 
-// Bug, this is preloading from the OS environment variables, skips dotenv
-// Documentation:  https://zetcode.com/javascript/dotenv/
 const POSTGRES_USER = process.env.POSTGRES_USER! || "juanh";
 const POSTGRES_HOST = process.env.POSTGRES_HOST! || "localhost";
 const POSTGRES_DB = process.env.POSTGRES_DB! || "link";
@@ -27,5 +21,6 @@ export default {
   migrations: {
     path: path.join(__dirname + "/migrations"),
     pattern: /^[\w-]+\d+\.[tj]s$/,
+    disableForeignKeys: false, 
   },
 } as Parameters<typeof MikroORM.init>[0];
