@@ -6,7 +6,7 @@ import path from "path";
 const POSTGRES_USER = process.env.POSTGRES_USER! || "";
 const POSTGRES_HOST = process.env.POSTGRES_HOST! || "localhost";
 const POSTGRES_DB = process.env.POSTGRES_DB! || "link";
-const POSTGRES_PASS = process.env.POSTGRES_PASS || "";
+const POSTGRES_PASS = process.env.POSTGRES_PASS || "StrongPassword";
 const DEBUG = !process.env.PRODUCTION!;
 
 export default {
@@ -20,5 +20,6 @@ export default {
   migrations: {
     path: path.join(__dirname + "/migrations"),
     pattern: /^[\w-]+\d+\.[tj]s$/,
+    disableForeignKeys: false,
   },
 } as Parameters<typeof MikroORM.init>[0];

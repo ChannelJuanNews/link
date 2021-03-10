@@ -5,6 +5,8 @@ src/migrations
 yarn.lock 
 package-lock.json
 
+#linux stuff to ignore 
+dump.rdb
 
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
@@ -15,6 +17,10 @@ package-lock.json
 
 # testing
 /coverage
+
+#migration files 
+link-backend/src/migrations/
+
 
 # next.js
 /.next/
