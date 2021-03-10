@@ -1,8 +1,9 @@
+import parse from "./util/parseEnvLinux";
+
 // import our environment variables
 import * as dotenv from "dotenv";
-dotenv.config();
+dotenv.config() ? null : parse();
 
-//
 import "reflect-metadata";
 // import our ORM
 import { MikroORM } from "@mikro-orm/core";
@@ -41,6 +42,7 @@ const main = async () => {
   const app = express();
 
   // connect our sesssion middleware
+
   const RedisStore = store(session);
   const RedisClient = redis.createClient();
 
@@ -109,6 +111,10 @@ const main = async () => {
     });
 };
 
-main().catch((err) => {
-  LOGGER(err);
-});
+try {
+  main().catch((err) => {
+    LOGGER(err);
+  });
+} catch (e) {
+  console.log("ERROR HERE", e);
+}
