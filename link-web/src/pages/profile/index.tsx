@@ -8,6 +8,8 @@ import { NextRouter, useRouter } from "next/router";
 
 import { Formik, Field, Form } from "formik";
 
+import { Helmet } from "react-helmet";
+
 import {
   Avatar,
   AvatarBadge,
@@ -257,6 +259,9 @@ const Profile: NextPage<registerProps> = ({}) => {
 
   return (
     <>
+      <Helmet>
+        <title>Profile</title>
+      </Helmet>
       <NavBar profile={true} />
       <Center my={12}>
         {fetching ? (
