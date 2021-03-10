@@ -18,12 +18,10 @@ import { HelloResolver } from "./resolvers/hello";
 import { UserResolver } from "./resolvers/user";
 // loggers for io
 import { LOGGER, ERROR } from "./util/logger";
-
 import redis from "redis";
 import session from "express-session";
 import store from "connect-redis";
 import { MyContext } from "./types";
-
 import cors from "cors";
 
 //const WARN = LOGGER.extend("WARN");
@@ -33,6 +31,7 @@ const PORT = process.env.PORT! || 3001;
 const main = async () => {
   // connect to the database and configure it with our config file
   const orm = await MikroORM.init(mikro_config);
+
   // create and run our migrations on connection
   await orm.getMigrator().up();
 
