@@ -69,6 +69,7 @@ export type Link = {
   id: Scalars['Int'];
   url: Scalars['String'];
   icon: Scalars['String'];
+  title: Scalars['String'];
   num_clicks: Scalars['Float'];
   num_views: Scalars['Float'];
   created_at: Scalars['String'];
@@ -108,6 +109,7 @@ export type MutationLoginArgs = {
 
 export type MutationAddLinkArgs = {
   icon?: Maybe<Scalars['String']>;
+  title: Scalars['String'];
   url: Scalars['String'];
 };
 
@@ -189,7 +191,11 @@ export type MeQuery = (
     { __typename?: 'UserResponse' }
     & { user?: Maybe<(
       { __typename?: 'User' }
-      & Pick<User, 'id' | 'username' | 'created_at'>
+      & Pick<User, 'username'>
+      & { links: Array<(
+        { __typename?: 'Link' }
+        & Pick<Link, 'url' | 'icon' | 'title'>
+      )> }
     )>, error?: Maybe<(
       { __typename?: 'UserError' }
       & Pick<UserError, 'message' | 'code'>
@@ -271,9 +277,12 @@ export const MeDocument = gql`
     query Me {
   me {
     user {
-      id
       username
-      created_at
+      links {
+        url
+        icon
+        title
+      }
     }
     error {
       message

@@ -12,12 +12,16 @@ export class Link {
   id!: number;
 
   @Field(() => String)
-  @Property()
+  @Property({ unique: true })
   url!: string;
 
   @Field(() => String)
   @Property({ nullable: true })
   icon?: string;
+
+  @Field(() => String)
+  @Property({ nullable: false })
+  title!: string;
 
   @Field(() => Number)
   @Property({ nullable: false })

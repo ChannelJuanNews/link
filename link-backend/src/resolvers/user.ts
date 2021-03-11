@@ -326,6 +326,7 @@ export class UserResolver {
   @Mutation(() => UserResponse)
   async addLink(
     @Arg("url") url: string,
+    @Arg("title") title: string,
     @Arg("icon", { nullable: true }) icon: string = "",
     @Ctx() { em, req }: MyContext
   ): Promise<UserResponse> {
@@ -334,11 +335,13 @@ export class UserResolver {
       if (user) {
         // this is the business logic
         // if we
+
         try {
           // create the new link
           const newLink = await em.create(Link, {
             url: url,
             user: user,
+            title: title,
             icon: icon,
           });
           // save the new linnk
@@ -351,7 +354,29 @@ export class UserResolver {
           return {
             link: newLink,
           };
-        } catch (e) {}
+        } catch (e) {
+          console.log(e);
+          switch (e.code) {
+            case "23505":
+              return {
+                error: {
+                  message:
+                    "Cannot add duplicate links, please provide a unique URL",
+                  code: 90,
+                },
+              };
+              break;
+            default:
+              // throw a generic error
+              return {
+                error: {
+                  message:
+                    "Failed to create link, make sure you provided both a valid url and a title",
+                  code: 90,
+                },
+              };
+          }
+        }
       }
       return {
         error: {

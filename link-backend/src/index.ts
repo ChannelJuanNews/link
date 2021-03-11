@@ -23,6 +23,7 @@ import session from "express-session";
 import store from "connect-redis";
 import { MyContext } from "./types";
 import cors from "cors";
+import { GraphQLError } from "graphql";
 
 //const WARN = LOGGER.extend("WARN");
 const PORT = process.env.PORT! || 3001;
@@ -76,6 +77,13 @@ const main = async () => {
       resolvers: [UserResolver, HelloResolver],
       validate: false,
     }),
+    // formatError?: (error: GraphQLError) => GraphQLFormattedError;
+    formatError: (error: GraphQLError) => {
+      //TODO: add better error messages
+      console.log(error.message);
+
+      return error;
+    },
 
     context: ({ req, res }): MyContext => ({
       em: orm.em,

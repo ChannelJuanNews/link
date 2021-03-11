@@ -1,11 +1,13 @@
 query Me {
   me {
     user {
-      id
       username
-      created_at
+      links {
+        url
+        icon
+        title
+      }
     }
-
     error {
       message
       code

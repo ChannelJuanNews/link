@@ -74,6 +74,7 @@ function getBody(
   }
   // if there is a user
   else if (data.me.user) {
+    console.log("THE LINSK ARE", links);
     return (
       <>
         <VStack>
@@ -110,7 +111,14 @@ function getBody(
           {fileErrors.hasInvalidImage ? "yes" : "no"}
 
           <Box py={8}>
-            <Button onClick={onOpen}> Add Link </Button>
+            <Button
+              onClick={onOpen}
+              bgColor="linkedin.700"
+              _hover={{ bg: "linkedin.500" }}
+            >
+              {" "}
+              Add Link{" "}
+            </Button>
           </Box>
         </VStack>
 
@@ -121,7 +129,11 @@ function getBody(
           onClose={onClose}
         >
           <ModalOverlay />
-          <ModalContent>
+          <ModalContent
+            css={{
+              backgroundColor: "#1A202C",
+            }}
+          >
             <ModalHeader> Add a link to your profile </ModalHeader>
             <ModalCloseButton />
             <ModalBody pb={6}>
@@ -221,6 +233,7 @@ const Profile: NextPage<registerProps> = ({}) => {
   const [{ data, fetching }] = useMeQuery();
   const router = useRouter();
   const [dataUrls, setDataUrls] = useState([]);
+
   const [changed, setChanged] = useState(false);
   const [links, setLinks] = useState([]);
 
@@ -293,5 +306,12 @@ const Profile: NextPage<registerProps> = ({}) => {
     </>
   );
 };
+
+export async function getServerSideProps(context) {
+  console.log("SERVER SIDE IS", context);
+  return {
+    props: {}, // will be passed to the page component as props
+  };
+}
 
 export default Profile;
