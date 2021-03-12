@@ -56,6 +56,15 @@ export const NavBar: React.FC<NavBarProps> = ({
                 </Button>{" "}
               </Link>
             </NextLink>
+            {/* this is for testing purposes */}
+            <NextLink href="/profile">
+              <Link style={{ textDecoration: "none" }}>
+                <Button colorScheme="linkedin" style={{ outline: "none" }}>
+                  {" "}
+                  Profile{" "}
+                </Button>{" "}
+              </Link>
+            </NextLink>
           </>
         )}
 

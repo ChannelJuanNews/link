@@ -7,8 +7,20 @@ import { NavBar } from "../../components/NavBar";
 import { NextRouter, useRouter } from "next/router";
 
 import { Formik, Field, Form } from "formik";
-
 import { Helmet } from "react-helmet";
+
+import prepass from "react-ssr-prepass";
+
+import {
+  createClient,
+  dedupExchange,
+  cacheExchange,
+  fetchExchange,
+  ssrExchange,
+  useQuery,
+} from "urql";
+
+import { withUrqlClient, initUrqlClient } from "next-urql";
 
 import {
   Avatar,
@@ -44,6 +56,8 @@ import { useFilePicker } from "react-sage";
 // utility imports
 import loadFile from "../../util/loadFile";
 import isValidUrl from "../../util/isValidUrl";
+import withHttp from "../../util/withHttp";
+import parseCookie from "../../util/parseCookie";
 
 function getBody(
   data: MeQuery,
@@ -74,7 +88,7 @@ function getBody(
   }
   // if there is a user
   else if (data.me.user) {
-    console.log("THE LINSK ARE", links);
+    console.log("THE LINKS", links);
     return (
       <>
         <VStack>
@@ -109,6 +123,30 @@ function getBody(
             : "no"}
 
           {fileErrors.hasInvalidImage ? "yes" : "no"}
+
+          {links.map((link, index) => {
+            console.log(link);
+            return (
+              <Link
+                href={withHttp(link.url)}
+                key={index}
+                target="_blank"
+                textDecoration="none"
+              >
+                <Button
+                  ml={4}
+                  mr={4}
+                  colorScheme="linkedin"
+                  p={3}
+                  variant="outline"
+                  _hover={{ bgColor: "linkedin.500", textDecoration: "none" }}
+                >
+                  {" "}
+                  {link.title}{" "}
+                </Button>
+              </Link>
+            );
+          })}
 
           <Box py={8}>
             <Button
@@ -181,7 +219,6 @@ function getBody(
                     <Field
                       name="urlinput"
                       validate={(e) => {
-                        // TODO: implement validation logic
                         return !isValidUrl(e);
                       }}
                     >
@@ -227,16 +264,15 @@ function getBody(
   }
 }
 
-interface registerProps {}
+interface registerProps {
+  ssr: any;
+}
 
-const Profile: NextPage<registerProps> = ({}) => {
-  const [{ data, fetching }] = useMeQuery();
+const Profile: NextPage<registerProps> = (props) => {
+  // platform agnostic
   const router = useRouter();
   const [dataUrls, setDataUrls] = useState([]);
-
   const [changed, setChanged] = useState(false);
-  const [links, setLinks] = useState([]);
-
   const { isOpen, onOpen, onClose } = useDisclosure();
   const initialRef = React.useRef();
   const finalRef = React.useRef();
@@ -261,29 +297,22 @@ const Profile: NextPage<registerProps> = ({}) => {
     getDataUrls();
   }, [files]);
 
-  useEffect(() => {
-    console.log("THE LOADED DATA IS", data);
-    if (data?.me?.user?.links) {
-      setLinks(data?.me?.user?.links);
-    }
-  }, [data]);
+  // if server side rendered
+  if (!!props.ssr.me.user) {
+    // server only
+    const [links, setLinks] = useState(props.ssr.me.user.links);
 
-  console.log("the data is", data, fetching);
-
-  return (
-    <>
-      <Helmet>
-        <title>Profile</title>
-      </Helmet>
-      <NavBar profile={true} />
-      <Center my={12}>
-        {fetching ? (
-          <Spinner />
-        ) : (
+    return (
+      <>
+        <Helmet>
+          <title>Profile</title>
+        </Helmet>
+        <NavBar profile={true} />
+        <Center my={12}>
           <>
             {changed ? <div> save button here </div> : null}
             {getBody(
-              data,
+              props.ssr,
               router,
               initialRef,
               finalRef,
@@ -299,18 +328,136 @@ const Profile: NextPage<registerProps> = ({}) => {
               links
             )}
           </>
-        )}
-      </Center>
+        </Center>
 
-      <></>
-    </>
-  );
+        <></>
+      </>
+    );
+  } else {
+    // client only
+    const [{ data, fetching }] = useMeQuery();
+    const [links, setLinks] = useState([]);
+
+    useEffect(() => {
+      console.log("THE LOADED DATA IS", data);
+      if (data?.me?.user?.links) {
+        setLinks(data?.me?.user?.links);
+      }
+    }, [data]);
+
+    return (
+      <>
+        <Helmet>
+          <title>Profile</title>
+        </Helmet>
+        <NavBar profile={true} />
+        <Center my={12}>
+          {fetching ? (
+            <Spinner />
+          ) : (
+            <>
+              {changed ? <div> save button here </div> : null}
+              {getBody(
+                props.ssr,
+                router,
+                initialRef,
+                finalRef,
+                isOpen,
+                onOpen,
+                onClose,
+                onFileClick,
+                dataUrls,
+                HiddenFileInput,
+                fileErrors,
+                setChanged,
+                setLinks,
+                links
+              )}
+            </>
+          )}
+        </Center>
+      </>
+    );
+  }
 };
 
 export async function getServerSideProps(context) {
-  console.log("SERVER SIDE IS", context);
+  const { res, req } = context;
+  const rawCookie = req.headers.cookie;
+
+  // parse cookie
+
+  const parsedCookie = parseCookie(req.headers.cookie || "");
+
+  // if the HTTP only cookie is available, then we can render server side log in with server side props
+  if (parsedCookie[process.env.COOKIE_NAME || "link:id"]) {
+  } else {
+    // if the HTTP only cookie is not available, we need to redirect them
+    res.writeHead(301, { location: "/" });
+    return res.end();
+  }
+
+  // we only get here if there is a named  httpOnly cookie with the `key` of `link:id`
+  // if someone fakes the cookie, we can rely on the session validation logic on our graphql server
+  const ssrCache = ssrExchange({ isClient: false });
+  const client = initUrqlClient(
+    {
+      url: process.env.GRAPHQL_URL || "http://localhost:3001/graphql",
+      exchanges: [dedupExchange, cacheExchange, ssrCache, fetchExchange],
+      fetchOptions: {
+        headers: {
+          Cookie: rawCookie,
+        },
+      },
+    },
+    false
+  );
+
+  // This query is used to populate the cache for the query
+  // used on this page.
+  // TODO: figure out how to store these queries in a different file
+  await client
+    .query(
+      `query Me {
+        me {
+          user {
+            username
+            links {
+              url
+              icon
+              title
+            }
+          }
+          error {
+            message
+            code
+          }
+        }
+      }
+      `
+    )
+    .toPromise();
+
+  // the graphql data that is returned is a JSON string
+  // so we need to parse the data accroding to the structure of the returned object
+  // and then inject the return value into our props to then be rendered on the server side
+  // which will return HTML which will then be indexed by several search engines and will lead to a faster page load
+
+  let data = ssrCache.extractData();
+  let serialized;
+
+  Object.keys(data).map((key) => {
+    if (!serialized) {
+      serialized = JSON.parse(data[key].data);
+    }
+  });
+
+  console.log("serialized is", serialized);
+
   return {
-    props: {}, // will be passed to the page component as props
+    props: {
+      ssr: { ...serialized },
+    },
   };
 }
 
