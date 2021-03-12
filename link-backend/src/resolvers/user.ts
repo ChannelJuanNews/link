@@ -63,6 +63,7 @@ class UserResponse {
 export class UserResolver {
   @Query(() => UserResponse)
   async me(@Ctx() { em, req }: MyContext): Promise<UserResponse> {
+    LOGGER("PROFILE RESOLVER CALLED");
     if (!req?.session?.user_id) {
       LOGGER("userid does it exist on our session storage");
       // mixpanel insertions here
@@ -96,6 +97,7 @@ export class UserResolver {
   // get all users
   @Query(() => [User])
   users(@Ctx() { em }: MyContext): Promise<User[]> {
+    LOGGER("USERS RESOLVER CALLED");
     return em.find(User, {});
   }
 
@@ -105,6 +107,7 @@ export class UserResolver {
     @Ctx() { em }: MyContext,
     @Arg("email") email: string
   ): Promise<UserResponse> {
+    LOGGER("EMAIL EXISTS RESOLVER CALLED");
     const user = await em.findOne(User, { email: caseInsensitive(email) });
     if (user)
       return {
@@ -121,6 +124,7 @@ export class UserResolver {
     @Ctx() { em }: MyContext,
     @Arg("username") username: string
   ): Promise<UserResponse> {
+    LOGGER("USERNAME EXISTS RESOLVER CALLED");
     const user = await em.findOne(User, {
       username: caseInsensitive(username),
     });
@@ -136,6 +140,7 @@ export class UserResolver {
   // get user by id
   @Query(() => User, { nullable: true })
   user(@Arg("id") id: number, @Ctx() { em }: MyContext): Promise<User | null> {
+    LOGGER("USER RESOLVER CALLED");
     return em.findOne(User, { id });
   }
 
@@ -147,6 +152,7 @@ export class UserResolver {
     @Arg("password") password: string,
     @Ctx() { em, req }: MyContext
   ): Promise<UserResponse> {
+    LOGGER("REGISTER USER RESOLVER CALLED");
     // make sure that the email is valid
     if (validateEmail(email)) {
       const hashed = await argon2.hash(password);
@@ -246,6 +252,7 @@ export class UserResolver {
     @Arg("password") password: string,
     @Ctx() { em, req }: MyContext
   ): Promise<UserResponse> {
+    LOGGER("LOGIN RESOLVER CALLED");
     // if no username or email is present, throw an error
     if (!username && !email) {
       return {
@@ -284,6 +291,7 @@ export class UserResolver {
 
   @Mutation(() => UserResponse)
   async logout(@Ctx() { req }: MyContext): Promise<UserResponse> {
+    LOGGER("LOGOUT RESOLVER CALLED");
     // TODO: break logout function out into its own utility function
     const logout = () => {
       try {
@@ -330,6 +338,7 @@ export class UserResolver {
     @Arg("icon", { nullable: true }) icon: string = "",
     @Ctx() { em, req }: MyContext
   ): Promise<UserResponse> {
+    LOGGER("ADD LINK RESOLVER CALLED");
     if (isValidUrl(url)) {
       const user = await em.findOne(User, { id: req.session.user_id });
       if (user) {
@@ -401,6 +410,7 @@ export class UserResolver {
     @Arg("email", () => String, { nullable: true }) email: string,
     @Ctx() { em }: MyContext
   ): Promise<User | null> {
+    LOGGER("UPDATE USER RESOLVER CALLED");
     const user = await em.findOne(User, { id });
     if (!user) {
       return null;
@@ -419,6 +429,7 @@ export class UserResolver {
     @Arg("id") id: number,
     @Ctx() { em }: MyContext
   ): Promise<boolean> {
+    LOGGER("DELETE USER RESOLVER CALLED");
     try {
       await em.nativeDelete(User, { id });
       return true;

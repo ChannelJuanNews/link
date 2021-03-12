@@ -1,6 +1,7 @@
 import { NavBar } from "../components/NavBar";
 
-const Index = () => {
+const Index = (props) => {
+  console.log("THE PROPS ARE");
   return (
     <>
       {" "}

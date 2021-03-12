@@ -1,6 +1,6 @@
 import errorCodes from "./errorCodes";
 
-export default function (error: Object | void | any) {
+function processRegisterErrors(error: Object | void | any) {
   if (!error) {
     return {};
   } else {
@@ -11,3 +11,5 @@ export default function (error: Object | void | any) {
     }
   }
 }
+
+export default processRegisterErrors;

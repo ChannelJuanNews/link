@@ -1,0 +1,13 @@
+mutation addLink($url: String!, $title: String!) {
+  addLink(url: $url, title: $title) {
+    link {
+      url
+      title
+      icon
+    }
+    error {
+      message
+      code
+    }
+  }
+}

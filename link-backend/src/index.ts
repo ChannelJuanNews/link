@@ -28,6 +28,9 @@ import { GraphQLError } from "graphql";
 //const WARN = LOGGER.extend("WARN");
 const PORT = process.env.PORT! || 3001;
 
+// define custom types from express
+type StaticOrigin = boolean | string | RegExp | (string | RegExp)[];
+
 // main function for running our backend
 const main = async () => {
   // connect to the database and configure it with our config file
@@ -46,11 +49,20 @@ const main = async () => {
   const RedisStore = store(session);
   const RedisClient = redis.createClient();
 
-  // set our cors so api fetching doesn't break in development
+  // set our corss whitelist o api fetching doesn't break in development
+  const origin_whitelist: StaticOrigin = [
+    process.env.SERVER || "",
+    "http://192.168.211.115:3000",
+    "http://localhost:3000",
+    "http://localhost:3001",
+  ];
+
+  // tell the express application to only accept CORS requests from the origins above
+
   app.use(
     cors({
-      origin: process.env.SERVER || "http://localhost:3000",
       credentials: true,
+      origin: origin_whitelist,
     })
   );
 
@@ -92,11 +104,13 @@ const main = async () => {
     }),
   });
 
+  //console.log("CORS ARE", process.env.SERVER);
+
   apollo.applyMiddleware({
     app,
     cors: {
       credentials: true,
-      origin: process.env.SERVER || "http://localhost:3000",
+      origin: origin_whitelist,
     },
   });
 

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 
 import { NextPage } from "next";
-import { MeQuery, useMeQuery } from "../../generated/graphql";
+import { useAddLinkMutation } from "../../generated/graphql";
 import { NavBar } from "../../components/NavBar";
 
 import { NextRouter, useRouter } from "next/router";
@@ -10,6 +10,7 @@ import { Formik, Field, Form } from "formik";
 import { Helmet } from "react-helmet";
 
 import prepass from "react-ssr-prepass";
+import { serialize } from "cookie";
 
 import {
   createClient,
@@ -19,8 +20,6 @@ import {
   ssrExchange,
   useQuery,
 } from "urql";
-
-import { withUrqlClient, initUrqlClient } from "next-urql";
 
 import {
   Avatar,
@@ -47,11 +46,25 @@ import {
   Input,
   Box,
   Link,
+  Menu,
+  MenuButton,
+  MenuItem,
+  IconButton,
+  MenuList,
   FormErrorMessage,
   Spacer,
 } from "@chakra-ui/react";
 
+import {
+  HamburgerIcon,
+  AddIcon,
+  ExternalLinkIcon,
+  RepeatIcon,
+  EditIcon,
+} from "@chakra-ui/icons";
+
 import { useFilePicker } from "react-sage";
+import { withUrqlClient, initUrqlClient, NextUrqlPageContext } from "next-urql";
 
 // utility imports
 import loadFile from "../../util/loadFile";
@@ -59,58 +72,115 @@ import isValidUrl from "../../util/isValidUrl";
 import withHttp from "../../util/withHttp";
 import parseCookie from "../../util/parseCookie";
 
-function getBody(
-  data: MeQuery,
-  router: NextRouter,
-  initialRef: React.MutableRefObject<undefined>,
-  finalRef: React.MutableRefObject<undefined>,
-  isOpen: boolean,
-  onOpen: any,
-  onClose: any,
-  onFileClick: any,
-  dataUrls: any,
-  HiddenFileInput: any,
-  fileErrors: any,
-  setChanged: any,
-  setLinks: any,
-  links: any
-) {
-  console.log(data);
+interface registerProps {
+  ssr: any;
+}
 
-  // if there is an error
-  if (data.me.error) {
-    router.push("/");
-  }
+const Profile: NextPage<registerProps> = (props) => {
+  console.log("THE PROPS IN THE PROFILE PAGE ARE", props);
 
-  // if there is no user
-  else if (!data.me.user) {
-    router.push("/");
-  }
-  // if there is a user
-  else if (data.me.user) {
-    console.log("THE LINKS", links);
-    return (
-      <>
+  // whenever we want to do some "pesudo global state persistance"
+  // const [state, setState] = useState(props)
+
+  // platform agnostic
+  const router = useRouter();
+  const [dataUrls, setDataUrls] = useState([]);
+  const [changed, setChanged] = useState(false);
+  const { isOpen, onOpen, onClose } = useDisclosure();
+  const initialRef = React.useRef();
+  const finalRef = React.useRef();
+  const [result, addLink] = useAddLinkMutation();
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  //const [{ data, fetching }] = useMeQuery(props.ssr ? props.ssr : null);
+  //console.log("THE DATA IZZZZZZZZZ", data);
+
+  const {
+    files,
+    onClick: onFileClick,
+    errors: fileErrors,
+    HiddenFileInput,
+  } = useFilePicker({
+    maxFileSize: Number(process.env.MAX_FILE_SIZE) || 5,
+    maxImageWidth: 1000,
+    imageQuality: 0.92,
+    resizeImage: true,
+  });
+
+  useEffect(() => {
+    const getDataUrls = async (): Promise<void> => {
+      const data = await Promise.all(files.map(loadFile));
+      setDataUrls(data);
+      // if a user uploaded a file
+      if (data.length > 0) {
+        console.log("UPLOAD FILE HERE", data, typeof data);
+      }
+    };
+
+    getDataUrls();
+  }, [files]);
+
+  useEffect(() => {
+    setIsRefreshing(false);
+  }, [props]);
+
+  // this route will ALWAYS be server side rendered, so keep that in mind
+
+  const refreshData = () => {
+    router.replace(router.asPath);
+  };
+
+  return (
+    <>
+      <Helmet>
+        <title>Profile</title>
+      </Helmet>
+      <NavBar profile={true} />
+      <Center my={12}>
+        <>{changed ? <div> save button here </div> : null}</>
+
         <VStack>
           <Wrap>
             <WrapItem>
-              <Avatar
-                size="2xl"
-                name={data.me.user.username.substr(0, 2)}
-                src={(() => {
-                  if (dataUrls) {
-                    //console.log(dataUrls[0]);
-                    return dataUrls[0];
-                  } else {
-                    return "";
-                  }
-                })()}
-              />
+              {isRefreshing ? (
+                <Avatar size="2xl" loading="eager" icon={<Spinner />} />
+              ) : (
+                <Avatar
+                  onClick={() => {
+                    setIsRefreshing(true);
+                  }}
+                  getInitials={(name) => {
+                    return name.substring(0, 5);
+                  }}
+                  icon={isRefreshing ? <Spinner /> : null}
+                  size="2xl"
+                  name={props?.ssr.me.user.username}
+                  loading="eager"
+                  showBorder={true}
+                  src={(() => {
+                    // if the user has a profile url attached, we render the URL
+                    // otherwise we render empty string
+                    if (props?.ssr.me.user?.avatar) {
+                      return props?.ssr.me.user?.avatar;
+                    }
+                    // if the user uploads a photo, immediately show that uploaded photo
+                    // then we call the upload photo function within useEffect
+                    // then we refresh server side props to get ssr
+                    if (dataUrls) {
+                      //console.log(dataUrls[0]);
+                      return dataUrls[0];
+                    } else {
+                      return "";
+                    }
+                  })()}
+                />
+              )}
             </WrapItem>
           </Wrap>
+
+          {/* here we want to allow the user to upload a file */}
           <Link
             onClick={(e) => {
-              console.log("WE ARE HERE", onFileClick);
               onFileClick();
             }}
           >
@@ -124,49 +194,104 @@ function getBody(
 
           {fileErrors.hasInvalidImage ? "yes" : "no"}
 
-          {links.map((link, index) => {
-            console.log(link);
-            return (
-              <Link
-                href={withHttp(link.url)}
-                key={index}
-                target="_blank"
-                textDecoration="none"
-              >
-                <Button
-                  ml={4}
-                  mr={4}
-                  colorScheme="linkedin"
-                  p={3}
-                  variant="outline"
-                  _hover={{ bgColor: "linkedin.500", textDecoration: "none" }}
-                >
-                  {" "}
-                  {link.title}{" "}
-                </Button>
-              </Link>
-            );
-          })}
+          <Spacer m={5} />
 
-          <Box py={8}>
+          {/* this is where we begin the process of showing the links */}
+
+          {props?.ssr.me.user.links
+            ? props?.ssr.me.user.links.map((link, index) => {
+                console.log(link);
+                return (
+                  <Link
+                    href={withHttp(link.url)}
+                    key={index}
+                    target="_blank"
+                    textDecoration="none"
+                    m="0"
+                    p="0"
+                    onClick={(e) => e.preventDefault()}
+                  >
+                    <Box
+                      w={[330, 430, 630]}
+                      rightIcon={
+                        <Menu>
+                          <MenuButton
+                            as={IconButton}
+                            aria-label="Options"
+                            icon={<HamburgerIcon />}
+                            size="xs"
+                            variant="outline"
+                          />
+                          <MenuList>
+                            <MenuItem icon={<AddIcon />} command="⌘T">
+                              New Tab
+                            </MenuItem>
+                            <MenuItem icon={<ExternalLinkIcon />} command="⌘N">
+                              New Window
+                            </MenuItem>
+                            <MenuItem icon={<RepeatIcon />} command="⌘⇧N">
+                              Open Closed Tab
+                            </MenuItem>
+                            <MenuItem icon={<EditIcon />} command="⌘O">
+                              Open File...
+                            </MenuItem>
+                          </MenuList>
+                        </Menu>
+                      }
+                    >
+                      <Button
+                        size="lg"
+                        height="48px"
+                        width="100%"
+                        border="2px"
+                        colorScheme="twitter"
+                        variant="solid"
+                        _hover={{
+                          bgColor: "linkedin.500",
+                          textDecoration: "none",
+                        }}
+                      >
+                        {" "}
+                        {link.title}{" "}
+                      </Button>
+                    </Box>
+                  </Link>
+                );
+              })
+            : null}
+
+          {/* button to add links */}
+          <Spacer m={8} />
+          <Box w={[330, 430, 630]}>
             <Button
               onClick={onOpen}
-              bgColor="linkedin.700"
-              _hover={{ bg: "linkedin.500" }}
+              size="lg"
+              height="48px"
+              width="100%"
+              border="2px"
+              colorScheme="purple"
+              variant="solid"
+              _hover={{
+                bgColor: "linkedin.500",
+                textDecoration: "none",
+              }}
             >
-              {" "}
               Add Link{" "}
             </Button>
           </Box>
         </VStack>
+
+        {/* modal goes here */}
 
         <Modal
           initialFocusRef={initialRef}
           finalFocusRef={finalRef}
           isOpen={isOpen}
           onClose={onClose}
+          size="lg"
+          motionPreset="slideInBottom"
         >
-          <ModalOverlay />
+          <ModalOverlay color="red" />
           <ModalContent
             css={{
               backgroundColor: "#1A202C",
@@ -177,12 +302,16 @@ function getBody(
             <ModalBody pb={6}>
               <Formik
                 initialValues={{ title: "", urlinput: "" }}
-                onSubmit={(values, actions) => {
+                onSubmit={async (values, actions) => {
                   console.log("values are", values, actions);
-                  links.push({
-                    title: values.title,
+                  addLink({
                     url: values.urlinput,
-                    priority: links.length,
+                    title: values.title,
+                  }).then((result) => {
+                    console.log("executed the mutation", result);
+                    setIsRefreshing(true);
+                    refreshData();
+                    onClose();
                   });
                 }}
               >
@@ -205,6 +334,7 @@ function getBody(
                           <Input
                             {...field}
                             id="title"
+                            ref={initialRef}
                             placeholder="e.g. My Course Name"
                           />
                           <FormErrorMessage>
@@ -246,7 +376,12 @@ function getBody(
 
                     <Flex ml={0} my={5} mb={-2}>
                       <Spacer />
-                      <Button colorScheme="blue" mr={3} type="submit">
+                      <Button
+                        colorScheme="blue"
+                        mr={3}
+                        type="submit"
+                        isLoading={isRefreshing}
+                      >
                         Add
                       </Button>
                       <Button onClick={onClose} type="button">
@@ -259,146 +394,15 @@ function getBody(
             </ModalBody>
           </ModalContent>
         </Modal>
-      </>
-    );
-  }
-}
-
-interface registerProps {
-  ssr: any;
-}
-
-const Profile: NextPage<registerProps> = (props) => {
-  // platform agnostic
-  const router = useRouter();
-  const [dataUrls, setDataUrls] = useState([]);
-  const [changed, setChanged] = useState(false);
-  const { isOpen, onOpen, onClose } = useDisclosure();
-  const initialRef = React.useRef();
-  const finalRef = React.useRef();
-
-  const {
-    files,
-    onClick: onFileClick,
-    errors: fileErrors,
-    HiddenFileInput,
-  } = useFilePicker({
-    maxFileSize: Number(process.env.MAX_FILE_SIZE) || 5,
-    maxImageWidth: 1000,
-    imageQuality: 0.92,
-    resizeImage: true,
-  });
-
-  useEffect(() => {
-    const getDataUrls = async (): Promise<void> => {
-      const data = await Promise.all(files.map(loadFile));
-      setDataUrls(data);
-    };
-    getDataUrls();
-  }, [files]);
-
-  // if server side rendered
-  if (!!props.ssr.me.user) {
-    // server only
-    const [links, setLinks] = useState(props.ssr.me.user.links);
-
-    return (
-      <>
-        <Helmet>
-          <title>Profile</title>
-        </Helmet>
-        <NavBar profile={true} />
-        <Center my={12}>
-          <>
-            {changed ? <div> save button here </div> : null}
-            {getBody(
-              props.ssr,
-              router,
-              initialRef,
-              finalRef,
-              isOpen,
-              onOpen,
-              onClose,
-              onFileClick,
-              dataUrls,
-              HiddenFileInput,
-              fileErrors,
-              setChanged,
-              setLinks,
-              links
-            )}
-          </>
-        </Center>
-
-        <></>
-      </>
-    );
-  } else {
-    // client only
-    const [{ data, fetching }] = useMeQuery();
-    const [links, setLinks] = useState([]);
-
-    useEffect(() => {
-      console.log("THE LOADED DATA IS", data);
-      if (data?.me?.user?.links) {
-        setLinks(data?.me?.user?.links);
-      }
-    }, [data]);
-
-    return (
-      <>
-        <Helmet>
-          <title>Profile</title>
-        </Helmet>
-        <NavBar profile={true} />
-        <Center my={12}>
-          {fetching ? (
-            <Spinner />
-          ) : (
-            <>
-              {changed ? <div> save button here </div> : null}
-              {getBody(
-                props.ssr,
-                router,
-                initialRef,
-                finalRef,
-                isOpen,
-                onOpen,
-                onClose,
-                onFileClick,
-                dataUrls,
-                HiddenFileInput,
-                fileErrors,
-                setChanged,
-                setLinks,
-                links
-              )}
-            </>
-          )}
-        </Center>
-      </>
-    );
-  }
+      </Center>
+    </>
+  );
 };
 
 export async function getServerSideProps(context) {
+  // first thing's first get the request and response objects
   const { res, req } = context;
-  const rawCookie = req.headers.cookie;
 
-  // parse cookie
-
-  const parsedCookie = parseCookie(req.headers.cookie || "");
-
-  // if the HTTP only cookie is available, then we can render server side log in with server side props
-  if (parsedCookie[process.env.COOKIE_NAME || "link:id"]) {
-  } else {
-    // if the HTTP only cookie is not available, we need to redirect them
-    res.writeHead(301, { location: "/" });
-    return res.end();
-  }
-
-  // we only get here if there is a named  httpOnly cookie with the `key` of `link:id`
-  // if someone fakes the cookie, we can rely on the session validation logic on our graphql server
   const ssrCache = ssrExchange({ isClient: false });
   const client = initUrqlClient(
     {
@@ -406,19 +410,27 @@ export async function getServerSideProps(context) {
       exchanges: [dedupExchange, cacheExchange, ssrCache, fetchExchange],
       fetchOptions: {
         headers: {
-          Cookie: rawCookie,
+          Cookie: req.headers.cookie,
         },
       },
     },
     false
   );
 
-  // This query is used to populate the cache for the query
-  // used on this page.
-  // TODO: figure out how to store these queries in a different file
-  await client
-    .query(
-      `query Me {
+  // parse the cookie for our own use
+  const parsedCookie = parseCookie(req.headers.cookie || "");
+
+  // if the HTTP only cookie is available, then we can render server side log in with server side props
+  if (parsedCookie[process.env.COOKIE_NAME || "link:id"]) {
+    // we only get here if there is a named  httpOnly cookie with the `key` of `link:id`
+    // if someone fakes the cookie, we can rely on the session validation logic on our graphql server
+
+    // This query is used to populate the cache for the query
+    // used on this page.
+    // TODO: figure out how to store these queries in a different file
+    await client
+      .query(
+        `query {
         me {
           user {
             username
@@ -435,30 +447,46 @@ export async function getServerSideProps(context) {
         }
       }
       `
-    )
-    .toPromise();
+      )
+      .toPromise();
 
-  // the graphql data that is returned is a JSON string
-  // so we need to parse the data accroding to the structure of the returned object
-  // and then inject the return value into our props to then be rendered on the server side
-  // which will return HTML which will then be indexed by several search engines and will lead to a faster page load
+    // the graphql data that is returned is a JSON string
+    // so we need to parse the data accroding to the structure of the returned object
+    // and then inject the return value into our props to then be rendered on the server side
+    // which will return HTML which will then be indexed by several search engines and will lead to a faster page load
 
-  let data = ssrCache.extractData();
-  let serialized;
+    let data = ssrCache.extractData();
+    let serialized;
 
-  Object.keys(data).map((key) => {
-    if (!serialized) {
-      serialized = JSON.parse(data[key].data);
+    Object.keys(data).map((key) => {
+      if (!serialized) {
+        serialized = JSON.parse(data[key].data);
+      }
+    });
+
+    // TODO:
+    // if there is an error with the query, set a cookie error and return the response
+    if (serialized.error) {
+      //
     }
-  });
 
-  console.log("serialized is", serialized);
+    console.log("serialized is", serialized);
 
-  return {
-    props: {
-      ssr: { ...serialized },
-    },
-  };
+    return {
+      props: {
+        ssr: { ...serialized },
+      },
+    };
+  } else {
+    // if no user is logged in, redirect the user back to the `/` route
+    console.log("WE ARE REDIRECTING");
+    return {
+      redirect: {
+        permanent: false,
+        destination: "/",
+      },
+    };
+  }
 }
 
 export default Profile;

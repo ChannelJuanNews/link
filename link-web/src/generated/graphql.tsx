@@ -124,6 +124,26 @@ export type MutationDeleteUserArgs = {
   id: Scalars['Float'];
 };
 
+export type AddLinkMutationVariables = Exact<{
+  url: Scalars['String'];
+  title: Scalars['String'];
+}>;
+
+
+export type AddLinkMutation = (
+  { __typename?: 'Mutation' }
+  & { addLink: (
+    { __typename?: 'UserResponse' }
+    & { link?: Maybe<(
+      { __typename?: 'Link' }
+      & Pick<Link, 'url' | 'title' | 'icon'>
+    )>, error?: Maybe<(
+      { __typename?: 'UserError' }
+      & Pick<UserError, 'message' | 'code'>
+    )> }
+  ) }
+);
+
 export type LoginMutationVariables = Exact<{
   username?: Maybe<Scalars['String']>;
   password: Scalars['String'];
@@ -221,6 +241,25 @@ export type UsernameExistsQuery = (
 );
 
 
+export const AddLinkDocument = gql`
+    mutation addLink($url: String!, $title: String!) {
+  addLink(url: $url, title: $title) {
+    link {
+      url
+      title
+      icon
+    }
+    error {
+      message
+      code
+    }
+  }
+}
+    `;
+
+export function useAddLinkMutation() {
+  return Urql.useMutation<AddLinkMutation, AddLinkMutationVariables>(AddLinkDocument);
+};
 export const LoginDocument = gql`
     mutation Login($username: String, $password: String!) {
   login(username: $username, password: $password) {
