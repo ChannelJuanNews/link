@@ -19,6 +19,8 @@ import { ArrowForwardIcon } from "@chakra-ui/icons";
 import Image from "next/image";
 
 import NextLink from "next/link";
+import { useRouter } from "next/router";
+import { useMeQuery } from "../generated/graphql";
 
 import HamburgerIcon from "../components/icons/hamburger";
 
@@ -32,6 +34,15 @@ export const NavBar: React.FC<NavBarProps> = ({
   profile = false,
   landing = true,
 }) => {
+  // get the router to see what path we are on
+  const router = useRouter();
+  const [{ data, fetching }] = useMeQuery();
+
+  if (data?.me.user && router.pathname !== "/profile") {
+    // if the user exists, redirect the user to the profile page
+    router.push("/profile");
+  }
+
   const { isOpen, onOpen, onClose } = useDisclosure();
 
   return (
@@ -68,7 +79,7 @@ export const NavBar: React.FC<NavBarProps> = ({
           </>
         )}
 
-        <Button onClick={onOpen}>
+        <Button onClick={onOpen} colorScheme="linkedin">
           {" "}
           <HamburgerIcon />{" "}
         </Button>

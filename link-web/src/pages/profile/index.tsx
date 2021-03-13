@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 
 import { NextPage } from "next";
 import { useAddLinkMutation } from "../../generated/graphql";
@@ -8,6 +8,8 @@ import { NextRouter, useRouter } from "next/router";
 
 import { Formik, Field, Form } from "formik";
 import { Helmet } from "react-helmet";
+
+import Cookies from "cookies";
 
 import prepass from "react-ssr-prepass";
 import { serialize } from "cookie";
@@ -53,7 +55,15 @@ import {
   MenuList,
   FormErrorMessage,
   Spacer,
+  HStack,
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+  PopoverArrow,
+  PopoverCloseButton,
 } from "@chakra-ui/react";
+
+import { FocusLock } from "@chakra-ui/focus-lock";
 
 import {
   HamburgerIcon,
@@ -77,7 +87,7 @@ interface registerProps {
 }
 
 const Profile: NextPage<registerProps> = (props) => {
-  console.log("THE PROPS IN THE PROFILE PAGE ARE", props);
+  console.log("THE PROPS IN THE PROFILE PAGE ARE", props, props.ssr.me.error);
 
   // whenever we want to do some "pesudo global state persistance"
   // const [state, setState] = useState(props)
@@ -91,6 +101,14 @@ const Profile: NextPage<registerProps> = (props) => {
   const finalRef = React.useRef();
   const [result, addLink] = useAddLinkMutation();
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [currentLink, setCurrentLink] = useState(null);
+
+  const {
+    onOpen: onLinkOpen,
+    onClose: onLinkClose,
+    isOpen: isLinkOpen,
+  } = useDisclosure();
+  const firstFieldRef = useRef(null);
 
   //const [{ data, fetching }] = useMeQuery(props.ssr ? props.ssr : null);
   //console.log("THE DATA IZZZZZZZZZ", data);
@@ -157,10 +175,15 @@ const Profile: NextPage<registerProps> = (props) => {
                   name={props?.ssr.me.user.username}
                   loading="eager"
                   showBorder={true}
+                  _hover={{
+                    bg: "white",
+                    cursor: "pointer",
+                    borderColor: "purple",
+                  }}
                   src={(() => {
                     // if the user has a profile url attached, we render the URL
                     // otherwise we render empty string
-                    if (props?.ssr.me.user?.avatar) {
+                    if (props?.ssr?.me?.user?.avatar) {
                       return props?.ssr.me.user?.avatar;
                     }
                     // if the user uploads a photo, immediately show that uploaded photo
@@ -184,8 +207,13 @@ const Profile: NextPage<registerProps> = (props) => {
               onFileClick();
             }}
           >
-            {" "}
-            <Text> Change Avatar </Text>{" "}
+            <Box marginTop={2} marginBottom={-3}>
+              <Text>
+                {props?.ssr.me.user.username
+                  ? "@" + props?.ssr.me.user.username
+                  : "Username nonexistant"}{" "}
+              </Text>{" "}
+            </Box>
           </Link>
           <HiddenFileInput accept=".jpg, .jpeg, .png" multiple={false} />
           {fileErrors.hasInvalidFileSize
@@ -200,69 +228,61 @@ const Profile: NextPage<registerProps> = (props) => {
 
           {props?.ssr.me.user.links
             ? props?.ssr.me.user.links.map((link, index) => {
-                console.log(link);
+                console.log("THE LINK IS", link);
                 return (
-                  <Link
-                    href={withHttp(link.url)}
-                    key={index}
-                    target="_blank"
-                    textDecoration="none"
-                    m="0"
-                    p="0"
-                    onClick={(e) => e.preventDefault()}
-                  >
-                    <Box
-                      w={[330, 430, 630]}
-                      rightIcon={
-                        <Menu>
-                          <MenuButton
-                            as={IconButton}
-                            aria-label="Options"
-                            icon={<HamburgerIcon />}
-                            size="xs"
-                            variant="outline"
-                          />
-                          <MenuList>
-                            <MenuItem icon={<AddIcon />} command="⌘T">
-                              New Tab
-                            </MenuItem>
-                            <MenuItem icon={<ExternalLinkIcon />} command="⌘N">
-                              New Window
-                            </MenuItem>
-                            <MenuItem icon={<RepeatIcon />} command="⌘⇧N">
-                              Open Closed Tab
-                            </MenuItem>
-                            <MenuItem icon={<EditIcon />} command="⌘O">
-                              Open File...
-                            </MenuItem>
-                          </MenuList>
-                        </Menu>
-                      }
+                  <HStack>
+                    <Link
+                      href={withHttp(link.url)}
+                      key={index}
+                      target="_blank"
+                      textDecoration="none"
+                      m="0"
+                      p="0"
+                      onClick={(e) => e.preventDefault()}
                     >
-                      <Button
-                        size="lg"
-                        height="48px"
-                        width="100%"
-                        border="2px"
-                        colorScheme="twitter"
-                        variant="solid"
-                        _hover={{
-                          bgColor: "linkedin.500",
-                          textDecoration: "none",
-                        }}
-                      >
-                        {" "}
-                        {link.title}{" "}
-                      </Button>
-                    </Box>
-                  </Link>
+                      <Box w={[230, 330, 430]}>
+                        <Button
+                          size="lg"
+                          height="48px"
+                          width="100%"
+                          border="2px"
+                          colorScheme="twitter"
+                          variant="solid"
+                          _hover={{
+                            bgColor: "linkedin.500",
+                            textDecoration: "none",
+                          }}
+                        >
+                          {" "}
+                          {link.title}{" "}
+                        </Button>
+                      </Box>
+                    </Link>
+
+                    <Popover
+                      isOpen={isLinkOpen}
+                      onOpen={onLinkOpen}
+                      onClose={onLinkClose}
+                      placement="bottom"
+                      closeOnBlur={false}
+                    >
+                      <PopoverTrigger>
+                        <Button size="lg" colorScheme="purple">
+                          {" "}
+                          <EditIcon />{" "}
+                        </Button>
+                      </PopoverTrigger>
+
+                      <PopoverContent></PopoverContent>
+                    </Popover>
+                  </HStack>
                 );
               })
             : null}
 
           {/* button to add links */}
           <Spacer m={8} />
-          <Box w={[330, 430, 630]}>
+          <Box w={[305, 405, 505]}>
             <Button
               onClick={onOpen}
               size="lg"
@@ -438,6 +458,7 @@ export async function getServerSideProps(context) {
               url
               icon
               title
+              id
             }
           }
           error {
@@ -466,12 +487,23 @@ export async function getServerSideProps(context) {
 
     // TODO:
     // if there is an error with the query, set a cookie error and return the response
-    if (serialized.error) {
-      //
+    if (serialized.me.error) {
+      console.log("THERE IS AN ERROR IN FETCHING");
+
+      const cookies = new Cookies(req, res);
+      cookies.set("link:error", serialized.me.error.toString(), {
+        httpOnly: false, // true by default
+      });
+
+      return {
+        redirect: {
+          permanent: false,
+          destination: "/",
+        },
+      };
     }
 
-    console.log("serialized is", serialized);
-
+    // return the normal page
     return {
       props: {
         ssr: { ...serialized },
@@ -480,6 +512,15 @@ export async function getServerSideProps(context) {
   } else {
     // if no user is logged in, redirect the user back to the `/` route
     console.log("WE ARE REDIRECTING");
+    const cookies = new Cookies(req, res);
+    cookies.set(
+      "link:error",
+      "Unauthorized, please login or register (event logged)",
+      {
+        httpOnly: false, // true by default
+      }
+    );
+
     return {
       redirect: {
         permanent: false,

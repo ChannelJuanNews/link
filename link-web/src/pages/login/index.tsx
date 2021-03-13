@@ -121,7 +121,7 @@ const Login: React.FC<registerProps> = ({}) => {
                   </Button>
                   <Spacer />
                   <NextLink href="/register">
-                    <Link my={5}>
+                    <Link my={3}>
                       {" "}
                       <Text> Don't have an account?</Text>
                     </Link>

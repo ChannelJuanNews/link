@@ -214,7 +214,7 @@ export type MeQuery = (
       & Pick<User, 'username'>
       & { links: Array<(
         { __typename?: 'Link' }
-        & Pick<Link, 'url' | 'icon' | 'title'>
+        & Pick<Link, 'url' | 'icon' | 'title' | 'id'>
       )> }
     )>, error?: Maybe<(
       { __typename?: 'UserError' }
@@ -321,6 +321,7 @@ export const MeDocument = gql`
         url
         icon
         title
+        id
       }
     }
     error {

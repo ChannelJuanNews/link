@@ -17,7 +17,6 @@ const theme = extendTheme({
     black: "#16161D",
   },
   fonts,
-  breakpoints: breakpoints,
 
   icons: {
     logo: {

@@ -32,6 +32,7 @@ import {
 
 import validateEmail from "../../util/validateEmail";
 import processRegisterErrors from "../../util/processRegisterErrors";
+import { title } from "node:process";
 
 interface registerProps {}
 
@@ -45,8 +46,13 @@ const Register: React.FC<registerProps> = ({}) => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
 
-  const [emailResult, checkEmail] = useEmailExistsQuery();
-  const [usernameResult, checkUsername] = useUsernameExistsQuery();
+  const [emailResult, checkEmail] = useEmailExistsQuery({
+    variables: { email: email },
+  });
+
+  const [usernameResult, checkUsername] = useUsernameExistsQuery({
+    variables: { username: username },
+  });
 
   const [userTaken, setUserTaken] = useState(false);
   const [emailTaken, setEmailTaken] = useState(false);
@@ -63,7 +69,11 @@ const Register: React.FC<registerProps> = ({}) => {
         }}
         onSubmit={async (values, { setErrors }) => {
           //console.log(values, email, username, password);
-          const response = await register({ username : username, email : email, password : password});
+          const response = await register({
+            username: username,
+            email: email,
+            password: password,
+          });
           if (response.data?.registerUser.error) {
             const errors = processRegisterErrors(
               response.data?.registerUser.error
@@ -89,9 +99,11 @@ const Register: React.FC<registerProps> = ({}) => {
                   case "email":
                     if (validateEmail(e.target?.value)) {
                       //console.log("email value is", e.target.value);
-                      const result = await checkEmail();
+                      checkEmail();
 
-                      console.log("THE RESULT IS", result);
+                      console.log(emailResult);
+                    } else {
+                      console.log("email is not valid");
                     }
 
                     //checkEmail(e.target.value);
@@ -148,7 +160,7 @@ const Register: React.FC<registerProps> = ({}) => {
                   </Button>
                   <Spacer />
                   <NextLink href="/login">
-                    <Link my={5}>
+                    <Link my={3}>
                       {" "}
                       <Text> Already have an account?</Text>
                     </Link>

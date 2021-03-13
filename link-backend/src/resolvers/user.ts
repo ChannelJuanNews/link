@@ -65,7 +65,9 @@ export class UserResolver {
   async me(@Ctx() { em, req }: MyContext): Promise<UserResponse> {
     LOGGER("PROFILE RESOLVER CALLED");
     if (!req?.session?.user_id) {
-      LOGGER("userid does it exist on our session storage");
+      LOGGER(
+        "userid does not exist on our session storage, tell the user to login or register"
+      );
       // mixpanel insertions here
 
       return {
@@ -109,10 +111,12 @@ export class UserResolver {
   ): Promise<UserResponse> {
     LOGGER("EMAIL EXISTS RESOLVER CALLED");
     const user = await em.findOne(User, { email: caseInsensitive(email) });
-    if (user)
+    if (user) {
       return {
         exists: true,
       };
+    }
+
     return {
       exists: false,
     };
